@@ -1,6 +1,6 @@
 # This Person Might Exist - Procedurally generated people.
 
-Generate rows of persons with following attributes such as gender, phone number, name, email and more.
+Generate rows of persons with attributes such as phone number, name, email, health and more.
 
 Inspired by http://thispersondoesnotexist.com but with data arrays (pandas).
 
