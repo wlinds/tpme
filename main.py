@@ -11,7 +11,8 @@ anonymize = False
 # Dir for exporting csv or xlsx
 os.makedirs('Exports', exist_ok=True)  
 
-export_csv = True
+export_csv = False
+export_excel = True
 export_path = 'Exports'
 
 # I slutändan blir det här en tuple med ints som mappas till olika beskrivande namn (utbildning, boende, etc.)
@@ -129,7 +130,7 @@ def gen_phone():
   phone = str(0) + a + str(np.random.randint(0,9)) + add_zero(b) + add_zero(c)
   return phone
 
-def generate_person(): # should make a class
+def generate_person(): # should make a class (?)
     # Pure ints
     age = gen_age()
     phone = gen_phone()
@@ -173,3 +174,6 @@ if __name__ == '__main__':
     print(df)
     if export_csv == True:
       pd.DataFrame.to_csv(df, export_path + '/test.csv')
+    
+    if export_excel == True:
+      pd.DataFrame.to_excel(df, export_path + '/test.xlsx')
