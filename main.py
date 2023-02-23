@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import os
 
-import email, bucket, mapping
+import _email, bucket, mapping
 
 # GDPR notice: this program can potentially generate real personal data
 # Make sure anonymize is TRUE or manually check all generated rows before making anything public
@@ -113,7 +113,13 @@ def gen_name(gender):
   last_bucket = [bucket.last_gpt_asia, bucket.last_gpt_eur0, bucket.last_gpt_eur1, bucket.last_gpt_eur2, bucket.last_gpt_mena, bucket.last_swe]
   last_name = last_bucket[np.random.randint(0,len(last_bucket))]
   last_name = last_name[np.random.randint(0,len(last_name))]
+
   return first_name + ' ' + last_name
+
+def new_name(gender):
+  x = first_bucket[np.random.randint(0,len(first_bucket))]
+
+  return x + ' ' + y
 
 def gen_phone():
   # challenge# 1: needs to be unique
@@ -145,7 +151,7 @@ def generate_person(): # should make a class (?)
 
     # TODO: Token this
     name = gen_name(gendr)
-    mail = email.gen_email(name, age)
+    mail = _email.gen_email(name, age)
     return (age,name,mail,phone,gendr,civil,utbil,syssl,boend,bormd,vardt,hälsa)
 
 if __name__ == '__main__':
