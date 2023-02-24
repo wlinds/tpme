@@ -1,7 +1,8 @@
 import numpy as np
 import datetime
+import bucket
 
-def gen_email(name, age):
+def gen_email(name, age, anonymize):
   
   # 15% to spell name incorrectly in email (boomer factor)
   if age > 59 and np.random.choice([0, 1], p=[0.85, 0.15]):
@@ -71,7 +72,7 @@ def gen_email(name, age):
     return millenial_mail(birth_year)
 
   # 0.5% to have a completely random and anonymous email
-  if np.random.choice([0,1], p=[0.995, 0.005]) == 1:
+  if np.random.choice([0,1], p=[0.995, 0.005]) == 1 or anonymize == True:
     return anonymize_mail1(is_apple=False) + '@' + domän
 
   # 1% to have an email hidden by apple services
@@ -87,7 +88,7 @@ def gen_email(name, age):
   return str(prefix) + str(name)+ str(suffix) + '@' + domän
 
 
-## --- Misc stuff for mail --- ##
+## --- Misc stuff for mail & Anomymize --- ##
 
 def anonymize_mail1(is_apple):
   length = np.random.randint(8, 12)
@@ -129,3 +130,10 @@ def millenial_mail(birth_year):
 	if stupid_mail[-1::] == 'x':
 	  return stupid_mail + domain_mil
 	return stupid_mail + str(birth_year)[-2:] + domain_mil
+
+## Password generation (sloppy)
+
+def gen_psw(name,age,anonymize):
+  if anonymize:
+    return 'REDACTED'
+  return bucket.psw0[np.random.randint(0,len(bucket.psw0))] + str(datetime.date.today().year - age)[::-2]
