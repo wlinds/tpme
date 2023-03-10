@@ -1,19 +1,28 @@
 import numpy as np
 import pandas as pd
 import os
+import hashlib
 
 import _email, bucket, mapping
 
 # GDPR notice: this program can potentially generate real personal data
 # Make sure anonymize is TRUE or manually check all generated rows before making anything public
+
 anonymize = False
 
 # Dir for exporting csv or xlsx
 os.makedirs('Exports', exist_ok=True)  
 
+# Adjust ammount of people / entries to generate
+rows = 1000
+
+# Adjust export settings
 export_csv = False
 export_excel = True
 export_path = 'Exports'
+file_name ='file_name'
+
+#------------------------------------ TODO: ------------------------------------------ #
 
 # I slutändan blir det här en tuple med ints som mappas till olika beskrivande namn (utbildning, boende, etc.)
 # När fine-tuning av fördelningar kan anses vara färdig går det att formulera mycket enklare och kortare funktion
@@ -26,6 +35,8 @@ export_path = 'Exports'
 # Eftersom nb slumpas innan kvinna/man kan det totala värdet på inparametrar överstiga 1,
 # Detta gäller inte för andra funktioner, där sum av alla fördelningar måste vara 1 från början
 def gen_gender(kvinna=0.5, man=0.5, nb=0.02):
+  if anonymize:
+    return 3
   if np.random.uniform() < 1 - nb:
     return np.random.choice([1, 2], p=[1-kvinna, 1-man])
   else:
@@ -95,6 +106,7 @@ def gen_health():
 ## ------- Name & Contact ------ ##
 
 def gen_name(gender):
+
   # TODO: conformist gender specific names + first, last name commonly matched
 
   # awful structure, TODO: optimize. actually no, the entire name generation shoud be rewritten
@@ -129,13 +141,22 @@ def gen_phone():
   b = np.random.randint(100, high=999)
   c = np.random.randint(100, high=999)
 
+  if anonymize:
+    a = 'XX'
+
   def add_zero(n):
-    if n < 10: n = '00' + str(n)
-    elif n < 100: n = '0' + str(n)
-    return str(n)
+      if n < 10: n = '00' + str(n)
+      elif n < 100: n = '0' + str(n)
+      return str(n)
 
   phone = str(0) + a + str(np.random.randint(0,9)) + add_zero(b) + add_zero(c)
   return phone
+
+# Hashing for anonymization
+def hash_string(string, end:int):
+    sha256_hash = hashlib.sha256(string.encode())
+    return sha256_hash.hexdigest()[::end]
+
 
 def generate_person(): # should make a class (?)
     # Pure ints
@@ -152,20 +173,17 @@ def generate_person(): # should make a class (?)
 
     # TODO: Token this
     name = gen_name(gendr)
-    mail = _email.gen_email(name, age)
-    return (age,name,mail,phone,gendr,civil,utbil,syssl,boend,bormd,vardt,hälsa)
+    mail = _email.gen_email(name, age, anonymize)
+    _psw = _email.gen_psw(name, age, anonymize)
+
+    return (age,name,mail,_psw,phone,gendr,civil,utbil,syssl,boend,bormd,vardt,hälsa)
 
 if __name__ == '__main__':
-    # Adjust ammount of persons / entries to generate
-    rows = 1000
-
+    
     # loop to generate rows
-    person_list = []
-    for n in range(rows):
-        p = generate_person()
-        person_list.append(p)
+    person_list = [generate_person() for n in range(rows)]
 
-    df = pd.DataFrame(person_list,columns=['Ålder','Namn','Email', 'Telefon', 'Kön', 'Civilstånd', 'Utbildningsnivå', 'Sysselsättning', 'Boende', 'Tillsammans_med', 'Vardagstillfredsställelse', 'Hälsa'])
+    df = pd.DataFrame(person_list, columns=['Ålder','Namn', 'Email', 'Lösenord', 'Telefon', 'Kön', 'Civilstånd', 'Utbildningsnivå', 'Sysselsättning', 'Boende', 'Tillsammans_med', 'Vardagstillfredsställelse', 'Hälsa'])
     
     df['Kön'] = df['Kön'].map(mapping.kön_map)
     df['Civilstånd'] = df['Civilstånd'].map(mapping.civil_map)
@@ -174,9 +192,13 @@ if __name__ == '__main__':
     df['Boende'] = df['Boende'].map(mapping.boend_map)
     df['Tillsammans_med'] = df['Tillsammans_med'].map(mapping.bormd_map)
 
+    if anonymize:
+      print('Hashing selected columns')
+      df['Namn'] = df['Namn'].apply(hash_string,end=8)
+
     print(df)
-    if export_csv == True:
-      pd.DataFrame.to_csv(df, export_path + '/test.csv')
+    if export_csv:
+      pd.DataFrame.to_csv(df, export_path + '/' + file_name + '.csv')
     
-    if export_excel == True:
-      pd.DataFrame.to_excel(df, export_path + '/test.xlsx')
+    if export_excel:
+      pd.DataFrame.to_excel(df, export_path + '/' + file_name + '.xlsx')
