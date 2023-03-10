@@ -35,7 +35,7 @@ file_name ='file_name'
 # Eftersom nb slumpas innan kvinna/man kan det totala värdet på inparametrar överstiga 1,
 # Detta gäller inte för andra funktioner, där sum av alla fördelningar måste vara 1 från början
 def gen_gender(kvinna=0.5, man=0.5, nb=0.02):
-  if anonymize == True:
+  if anonymize:
     return 3
   if np.random.uniform() < 1 - nb:
     return np.random.choice([1, 2], p=[1-kvinna, 1-man])
@@ -135,7 +135,7 @@ def gen_phone():
   b = np.random.randint(100, high=999)
   c = np.random.randint(100, high=999)
 
-  if anonymize == True:
+  if anonymize:
     a = 'XX'
 
   def add_zero(n):
@@ -186,13 +186,13 @@ if __name__ == '__main__':
     df['Boende'] = df['Boende'].map(mapping.boend_map)
     df['Tillsammans_med'] = df['Tillsammans_med'].map(mapping.bormd_map)
 
-    if anonymize == True:
+    if anonymize:
       print('Hashing selected columns')
       df['Namn'] = df['Namn'].apply(hash_string,end=8)
 
     print(df)
-    if export_csv == True:
+    if export_csv:
       pd.DataFrame.to_csv(df, export_path + '/' + file_name + '.csv')
     
-    if export_excel == True:
+    if export_excel:
       pd.DataFrame.to_excel(df, export_path + '/' + file_name + '.xlsx')
