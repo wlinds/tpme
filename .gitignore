@@ -133,3 +133,6 @@ dmypy.json
 
 # macOS
 *.DS_Store
+
+*notebook.ipynb
+*scikit_7.py
