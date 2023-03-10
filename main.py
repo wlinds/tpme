@@ -128,6 +128,12 @@ def gen_name(gender):
 
   return first_name + ' ' + last_name
 
+def new_name(gender): 
+  # Experimental function (make changes to this one)
+  x = first_bucket[np.random.randint(0,len(first_bucket))]
+
+  return x + ' ' + y
+
 def gen_phone():
   # challenge# 1: needs to be unique
   # for now it will have a probability of 2.474631929433396e-07 to be duplicare

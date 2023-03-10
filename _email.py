@@ -1,5 +1,6 @@
 import numpy as np
 import datetime
+
 import bucket
 
 def gen_email(name, age, anonymize):
@@ -72,6 +73,7 @@ def gen_email(name, age, anonymize):
     return millenial_mail(birth_year)
 
   # 0.5% to have a completely random and anonymous email
+
   if np.random.choice([0,1], p=[0.995, 0.005]) == 1 or anonymize == True:
     return anonymize_mail1(is_apple=False) + '@' + domän
 
@@ -86,6 +88,7 @@ def gen_email(name, age, anonymize):
   ################################################################
       
   return str(prefix) + str(name)+ str(suffix) + '@' + domän
+
 
 
 ## --- Misc stuff for mail & Anomymize --- ##
