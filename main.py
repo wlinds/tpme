@@ -116,7 +116,8 @@ def gen_name(gender):
 
   return first_name + ' ' + last_name
 
-def new_name(gender):
+def new_name(gender): 
+  # Experimental function (make changes to this one)
   x = first_bucket[np.random.randint(0,len(first_bucket))]
 
   return x + ' ' + y
@@ -155,10 +156,6 @@ def generate_person(): # should make a class (?)
     return (age,name,mail,phone,gendr,civil,utbil,syssl,boend,bormd,vardt,hälsa)
 
 if __name__ == '__main__':
-    if anonymize == True:
-        print('Sry, not implemented yet lol')
-        quit()
-
     # Adjust ammount of persons / entries to generate
     rows = 1000
 
