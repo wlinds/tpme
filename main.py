@@ -158,30 +158,35 @@ def hash_string(string, end:int):
     return sha256_hash.hexdigest()[::end]
 
 
-def generate_person(): # should make a class (?)
-    # Pure ints
-    age = gen_age()
-    phone = gen_phone()
-    gendr = gen_gender()
-    civil = gen_civilstånd(age)
-    utbil = gen_utbildningsnivå(age)
-    syssl = gen_sysselsättning(age)
-    boend = gen_boende()
-    bormd = gen_bor_med(age, civil)
-    vardt = gen_vardagstillfredsställelse()
-    hälsa = gen_health()
+class PersonGenerator:
+    def __init__(self, anonymize=True):
+        self.anonymize = anonymize
+        
+    def generate_person(self):
+        # Pure ints
+        age = gen_age()
+        phone = gen_phone()
+        gendr = gen_gender()
+        civil = gen_civilstånd(age)
+        utbil = gen_utbildningsnivå(age)
+        syssl = gen_sysselsättning(age)
+        boend = gen_boende()
+        bormd = gen_bor_med(age, civil)
+        vardt = gen_vardagstillfredsställelse()
+        hälsa = gen_health()
 
-    # TODO: Token this
-    name = gen_name(gendr)
-    mail = _email.gen_email(name, age, anonymize)
-    _psw = _email.gen_psw(name, age, anonymize)
+        # TODO: Token this
+        name = gen_name(gendr)
+        mail = _email.gen_email(name, age, self.anonymize)
+        _psw = _email.gen_psw(name, age, self.anonymize)
 
-    return (age,name,mail,_psw,phone,gendr,civil,utbil,syssl,boend,bormd,vardt,hälsa)
+        return (age,name,mail,_psw,phone,gendr,civil,utbil,syssl,boend,bormd,vardt,hälsa)
 
 if __name__ == '__main__':
-    
-    # loop to generate rows
-    person_list = [generate_person() for n in range(rows)]
+  
+    # Create instance of person class
+    pg = PersonGenerator()
+    person_list = [pg.generate_person() for n in range(rows)]
 
     df = pd.DataFrame(person_list, columns=['Ålder','Namn', 'Email', 'Lösenord', 'Telefon', 'Kön', 'Civilstånd', 'Utbildningsnivå', 'Sysselsättning', 'Boende', 'Tillsammans_med', 'Vardagstillfredsställelse', 'Hälsa'])
     
