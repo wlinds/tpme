@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import os
 import hashlib
+import sqlite3
 
 import _email, bucket, mapping
 
@@ -18,9 +19,10 @@ rows = 1000
 
 # Adjust export settings
 export_csv = False
-export_excel = True
+export_excel = False
+export_sql = True
 export_path = 'Exports'
-file_name ='file_name'
+file_name ='file_name8'
 
 #------------------------------------ TODO: ------------------------------------------ #
 
@@ -157,7 +159,6 @@ def hash_string(string, end:int):
     sha256_hash = hashlib.sha256(string.encode())
     return sha256_hash.hexdigest()[::end]
 
-
 class PersonGenerator:
     def __init__(self, anonymize=True):
         self.anonymize = anonymize
@@ -185,7 +186,7 @@ class PersonGenerator:
 if __name__ == '__main__':
   
     # Create instance of person class
-    pg = PersonGenerator()
+    pg = PersonGenerator(anonymize=anonymize) # Change to True/False here or change variable value at row 12
     person_list = [pg.generate_person() for n in range(rows)]
 
     df = pd.DataFrame(person_list, columns=['Ålder','Namn', 'Email', 'Lösenord', 'Telefon', 'Kön', 'Civilstånd', 'Utbildningsnivå', 'Sysselsättning', 'Boende', 'Tillsammans_med', 'Vardagstillfredsställelse', 'Hälsa'])
@@ -202,8 +203,14 @@ if __name__ == '__main__':
       df['Namn'] = df['Namn'].apply(hash_string,end=8)
 
     print(df)
+
     if export_csv:
-      pd.DataFrame.to_csv(df, export_path + '/' + file_name + '.csv')
+      pd.DataFrame.to_csv(df, f'{export_path}/{file_name}.csv')
     
     if export_excel:
-      pd.DataFrame.to_excel(df, export_path + '/' + file_name + '.xlsx')
+      pd.DataFrame.to_excel(df, f'{export_path}/{file_name}.xlsx')
+
+    if export_sql:
+      db_path = f'{export_path}/{file_name}.db'
+      con = sqlite3.connect(db_path)
+      df.to_sql('People', con=con, if_exists='replace')
