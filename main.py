@@ -4,25 +4,23 @@ import os
 import hashlib
 import sqlite3
 
-import _email, bucket, mapping
+import _email, bucket
+from mapping import TranslationMap
 
 # GDPR notice: this program can potentially generate real personal data
 # Make sure anonymize is TRUE or manually check all generated rows before making anything public
 
 anonymize = False
 
-# Dir for exporting csv or xlsx
-os.makedirs('Exports', exist_ok=True)  
-
 # Adjust ammount of people / entries to generate
 rows = 1000
 
 # Adjust export settings
-export_csv = False
+export_csv = True
 export_excel = False
-export_sql = True
+export_sql = False
 export_path = 'Exports'
-file_name ='file_name8'
+file_name ='tpme_export'
 
 #------------------------------------ TODO: ------------------------------------------ #
 
@@ -50,7 +48,8 @@ def gen_age():
   while age <= 15 or age >= 100:
     age = int(np.random.normal(loc=42, scale=20))
   return age
-  # There is probably a way to avoid having to write this twice while still using normal distribution, but it works for now
+
+# There is probably a way to avoid having to write this twice while still using normal distribution, but it works for now
 #TODO: Check correlation with age for civilstånd, utbildningsnivå etc.
 
 def gen_civilstånd(age):
@@ -164,7 +163,7 @@ class PersonGenerator:
         self.anonymize = anonymize
         
     def generate_person(self):
-        # Pure ints
+        # Just ints
         age = gen_age()
         phone = gen_phone()
         gendr = gen_gender()
@@ -183,25 +182,39 @@ class PersonGenerator:
 
         return (age,name,mail,_psw,phone,gendr,civil,utbil,syssl,boend,bormd,vardt,hälsa)
 
+def value_mapper(person_list, language='english', anonymize=False):
+    tm = TranslationMap(language=language)
+
+    df = pd.DataFrame(person_list, columns=[tm.column_names])
+
+    df['Gender'] = df.apply(lambda row: tm.get_translation('Gender', row['Gender']), axis=1)
+    df['Marital Status'] = df.apply(lambda row: tm.get_translation('Marital Status', row['Marital Status']), axis=1)
+    df['Education'] = df.apply(lambda row: tm.get_translation('Education', row['Education']), axis=1)
+    df['Occupation'] = df.apply(lambda row: tm.get_translation('Occupation', row['Occupation']), axis=1)
+    df['Accommodation'] = df.apply(lambda row: tm.get_translation('Accommodation', row['Accommodation']), axis=1)
+    df['Living with'] = df.apply(lambda row: tm.get_translation('Living with', row['Living with']), axis=1)
+
+    if anonymize:
+        print('Hashing selected columns')
+        df['Name'] = df['Name'].apply(hash_string, end=8)
+
+    if language == 'swedish':
+        df.columns = [tm.column_names_swe]
+
+    return df
+
+
 if __name__ == '__main__':
+
+    # Default dir for exporting csv or xlsx
+    os.makedirs('Exports', exist_ok=True)  
   
     # Create instance of person class
     pg = PersonGenerator(anonymize=anonymize) # Change to True/False here or change variable value at row 12
     person_list = [pg.generate_person() for n in range(rows)]
 
-    df = pd.DataFrame(person_list, columns=['Ålder','Namn', 'Email', 'Lösenord', 'Telefon', 'Kön', 'Civilstånd', 'Utbildningsnivå', 'Sysselsättning', 'Boende', 'Tillsammans_med', 'Vardagstillfredsställelse', 'Hälsa'])
-    
-    df['Kön'] = df['Kön'].map(mapping.kön_map)
-    df['Civilstånd'] = df['Civilstånd'].map(mapping.civil_map)
-    df['Utbildningsnivå'] = df['Utbildningsnivå'].map(mapping.utbil_map)
-    df['Sysselsättning'] = df['Sysselsättning'].map(mapping.syssl_map)
-    df['Boende'] = df['Boende'].map(mapping.boend_map)
-    df['Tillsammans_med'] = df['Tillsammans_med'].map(mapping.bormd_map)
-
-    if anonymize:
-      print('Hashing selected columns')
-      df['Namn'] = df['Namn'].apply(hash_string,end=8)
-
+    # df = pd.DataFrame(person_list, columns=['Ålder','Namn', 'Email', 'Lösenord', 'Telefon', 'Kön', 'Civilstånd', 'Utbildningsnivå', 'Sysselsättning', 'Boende', 'Tillsammans_med', 'Vardagstillfredsställelse', 'Hälsa'])
+    df = value_mapper(person_list)
     print(df)
 
     if export_csv:
