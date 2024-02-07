@@ -1,94 +1,140 @@
 import numpy as np
 import datetime
-
 import bucket
 
-def gen_email(name, age, anonymize):
-  
-  # 15% to spell name incorrectly in email (boomer factor)
-  if age > 59 and np.random.choice([0, 1], p=[0.85, 0.15]):
-    spelling_mistake(name)
+import pickle
 
-  # add birth year to end of mail
-  birth_year = datetime.date.today().year - age
 
-  domän = np.random.choice(['gmail.com', 'hotmail.com',
-                            'live.se', 'live.com', 'outlook.com',
-                            'yahoo.se', 'icloud.com'],
-                            p=[0.55, 0.05, 0.05, 0.05, 0.19, 0.01, 0.1])
+# boomer factor: 15% to spell name incorrectly in email if age > boomer_age
 
-  # 50% to have older domain if age > 60
-  if age > 60 and np.random.randint(2) == 1:
-      if np.random.randint(2) ==1: suffix = str(birth_year)[-2:] # 50% to remove first two digits from birth year
-      domän = np.random.choice(['telia.se', 'spray.se', 'glocalnet.se', 'bredband.net', 'regeringen.se'],
-      p=[0.30, 0.23, 0.23, 0.23, 0.01])
+def gen_email(name: str = None, 
+              age: int = None,
+              anonymize: bool = 0,
 
-  # 90% to remove century from birth year if age < 60
-  elif age < 60:
-      if np.random.choice([0,1], p=[0.1, 0.9]) == 1: suffix = str(birth_year)[-2:]
+              boomer_age: int = 59,
+              boomer_factor: float = 0.15,
+              
+              domain_distribution: list = [0.55, 0.05, 0.05, 0.05, 0.19, 0.01, 0.1],
+              custom_domain: list = [], # TODO
+              
+              century_removal_p: float = 0.9,
+              nickname_p: float = 0.5,
 
-  # 50% to remove entire birth year 25% to add a random int instead
-  suffix_modifier = np.random.choice([0,1,3], p=[0.5, 0.25, 0.25])
+              mean_age: int = 40,
+              std_age: int = 15,
 
-  if suffix_modifier == 0: suffix = ''
-  elif suffix_modifier == 1: suffix = np.random.randint(1,9)
-  else: suffix = str(birth_year)[-2:]
+              millenial_mail_p: float = 0.05,
+              anonymize_mail_p: float = 0.005,
+              apple_hidden_p: float = 0.01,
+              asdf_mail_p: float = 0.05
 
-	# 50% to have a first name "nickname", then 20% to only have first letter and .
-  if np.random.choice([0,1], p=[0.5,0.5]) == 1:
-    # TODO: there should be some mapping for this to determine likely ways to shorten names
+              
+              ):
 
-    first, last = name.split()[0], name.split()[1]
-    # If length > 7, only use first 3 letters
-    if len(first) > 7:
-      first = first[:3:]
-    # if length > 6 only use first 4 letters 
-    if len(first) > 6:
-      first = first[:4:] 
+    if not name:
+      try:
+          file_path = 'Data/name_corpus.pkl'
+          with open(file_path, 'rb') as file:
+              name_corpus = pickle.load(file)
 
-    # 20% to have only first letter in first name
-    if np.random.choice([0,1], p=[0.8, 0.2]) == 1:
-      first, last = name.split()[0], name.split()[1]
-      first = first[:1:] + np.random.choice(['_','.'])
+          name_dict_keys = list(name_corpus.keys())
+          name = np.random.choice(name_corpus[np.random.choice(name_dict_keys)] + name_corpus[np.random.choice(name_dict_keys)])
+          name += " " + np.random.choice(name_corpus[np.random.choice(name_dict_keys)])
+          # TODO This is too random. Should be replaced with the function that generates names from tokens.
+
+      except FileNotFoundError:
+          print(f"Name generation error: Could not find {file_path}. Name set to default.")
+          name = "John Doe"
+
+    if not age:
+        age = int(np.random.normal(mean_age, std_age))
+
+    # TODO 
+    domain_bucket = ['gmail.com', 'hotmail.com', 'live.se', 'live.com', 'outlook.com', 'yahoo.se', 'icloud.com']
+    other_domains = ['telia.se', 'spray.se', 'glocalnet.se', 'bredband.net', 'regeringen.se']
+
+    if age > boomer_age and np.random.rand() < boomer_factor:
+        spelling_mistake(name)
+
+    birth_year = datetime.date.today().year - age # Add birth year to end of mail 
+    mail_domain = np.random.choice(domain_bucket, p=domain_distribution)
+
+    if age > boomer_age and np.random.rand() < boomer_factor:
+        if np.random.randint(2) == 1: suffix = str(birth_year)[-2:] # 50% to remove first two digits from birth year
+        mail_domain = np.random.choice(other_domains, p=[0.30, 0.23, 0.23, 0.23, 0.01])
+
+    # Remove century from birth year if age < 60
+    elif age < boomer_age:
+        if np.random.choice([0,1], p=[0.1, century_removal_p]) == 1: suffix = str(birth_year)[-2:]
+
+    # 50% to remove entire birth year, 25% to add a random int instead
+    suffix_modifier = np.random.choice([0,1,3], p=[0.5, 0.25, 0.25])
+
+    if suffix_modifier == 0: suffix = ''
+    elif suffix_modifier == 1: suffix = np.random.randint(1,9)
+    else: suffix = str(birth_year)[-2:]
+
+    # 50% to have a first name "nickname", then 20% to only have first letter and .
+    if np.random.choice([0, 1], p=[1-nickname_p, nickname_p]) == 1:
+        try:
+            first, last = name.split()[0], name.split()[1]
+
+            # If length > 7, only use first 3 letters
+            if len(first) > 7:
+                first = first[:3]
+            # if length > 6 only use first 4 letters 
+            elif len(first) > 6:
+                first = first[:4]
+
+            # 20% to have only the first letter in the first name
+            if np.random.choice([0, 1], p=[0.8, 0.2]) == 1:
+                first = first[:1] + np.random.choice(['_', '.'])
+
+            name = first + last
+
+        except IndexError:
+            # No whitespaces in input string
+            print("Name does not contain a space.")
+
+
+    # Replace blank space and make lowercase
+    x = np.random.choice(['_','__','-','.',''],p=[0.1,0.1,0.2,0.1,0.5])
+    name = name.lower().replace(' ',x )
+
+    # 10% to add other characters to email
+    if np.random.choice([0,1], p=[0.9, 0.1]) == 1:
+      prefix = '_'
+    else:
+      prefix = ''
     
-    name = first + last
+
+    ################### Replace name entirely #####################
 
 
+    # millenial_mail_p: float = 0.05,
+    # anonymize_mail_p: float = 0.005,
+    # apple_hidden_p: float = 0.01,
+    # asdf_mail_p: float = 0.05
 
-  # replace blank space and make lowercase
-  x = np.random.choice(['_','__','-','.',''],p=[0.1,0.1,0.2,0.1,0.5])
-  name = name.lower().replace(' ',x )
+    # Millenial email if millenial
+    if birth_year in range(1989,1998) and np.random.rand() < millenial_mail_p:
+        return millenial_mail(birth_year)
 
-  # 10% to add other characters to email
-  if np.random.choice([0,1], p=[0.9, 0.1]) == 1:
-    prefix = '_'
-  else:
-    prefix = ''
-  
+    # Completely random and anonymous email
+    if np.random.choice([0,1], p=[0.995, 0.005]) == 1 or anonymize == True:
+        return anonymize_mail1(is_apple=False) + '@' + mail_domain
 
-  ################### Replace name entirely #####################
+    # 1% to have an email hidden by apple services
+    if np.random.choice([0,1], p=[0.99, 0.01]) == 1:
+      return anonymize_mail1(is_apple=True)
 
-  # 5% to have a millenial email if millenial
-  if birth_year in range(1989,1998) and np.random.choice([0,1], p=[0.95, 0.05]) == 1:
-    return millenial_mail(birth_year)
+    # 0.5% to have an "asdf" (when users just type "randomly") email:
+    if np.random.choice([0,1], p=[0.995, 0.005]) == 1:
+      return asdf_mail() + '@' + mail_domain
 
-  # 0.5% to have a completely random and anonymous email
-
-  if np.random.choice([0,1], p=[0.995, 0.005]) == 1 or anonymize == True:
-    return anonymize_mail1(is_apple=False) + '@' + domän
-
-  # 1% to have an email hidden by apple services
-  if np.random.choice([0,1], p=[0.99, 0.01]) == 1:
-    return anonymize_mail1(is_apple=True)
-
-  # 0.5% to have an "asdf" (when users just type "randomly") email:
-  if np.random.choice([0,1], p=[0.995, 0.005]) == 1:
-    return asdf_mail() + '@' + domän
-
-  ################################################################
-      
-  return str(prefix) + str(name)+ str(suffix) + '@' + domän
-
+    ################################################################
+        
+    return str(prefix) + str(name)+ str(suffix) + '@' + mail_domain
 
 
 ## --- Misc stuff for mail & Anomymize --- ##
@@ -125,7 +171,7 @@ def spelling_mistake(name):
 
 def millenial_mail(birth_year):
 	deco = np.random.choice(['xX_', '_', '', ''])
-	word_list1 = ['star', 'cool', 'dark', 'moon', 'knight', 'hunter']
+	word_list1 = ['star', 'cool', 'dark', 'moon', 'knight', 'hunter', '420']
 	word_list2 = ['boy', 'girl', 'dude', 'killer', 'fire', 'master']
 	separator = ['_', '', '', '-']
 	domain_mil = '@' + np.random.choice(['gmail.com','live.com','live.se'])	
@@ -134,9 +180,15 @@ def millenial_mail(birth_year):
 	  return stupid_mail + domain_mil
 	return stupid_mail + str(birth_year)[-2:] + domain_mil
 
-## Password generation (sloppy)
 
 def gen_psw(name,age,anonymize):
+  ## Password generation (sloppy)
   if anonymize:
     return 'REDACTED'
   return bucket.psw0[np.random.randint(0,len(bucket.psw0))] + str(datetime.date.today().year - age)[::-2]
+
+
+if __name__ == "__main__":
+  # print(millenial_mail(1992))
+  print(gen_email())
+  print(gen_email(age=30, millenial_mail_p=1))
