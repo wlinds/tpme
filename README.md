@@ -2,7 +2,14 @@
 
 Generate rows of persons with attributes such as phone number, name, email, health and more.
 
-Inspired by http://thispersondoesnotexist.com but with data arrays (pandas).
+Inspired by http://thispersondoesnotexist.com but with data arrays (Pandas).
+
+[Check the notebook](demo.ipynb) for a demo.
+
+**Export support**: CSV, Excel, SQL
+
+
+
 
 ### GDPR Notice
 
