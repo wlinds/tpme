@@ -1,6 +1,7 @@
+import os
+import pickle
 import numpy as np
 import pandas as pd
-import os
 import hashlib
 import sqlite3
 
@@ -15,7 +16,7 @@ anonymize = False
 # Adjust ammount of people / entries to generate
 rows = 1000
 
-# Adjust export settings
+# Export settings
 export_csv = True
 export_excel = False
 export_sql = False
@@ -34,19 +35,19 @@ file_name ='tpme_export'
 
 # Eftersom nb slumpas innan kvinna/man kan det totala värdet på inparametrar överstiga 1,
 # Detta gäller inte för andra funktioner, där sum av alla fördelningar måste vara 1 från början
-def gen_gender(kvinna=0.5, man=0.5, nb=0.02):
-  if anonymize:
-    return 3
-  if np.random.uniform() < 1 - nb:
-    return np.random.choice([1, 2], p=[1-kvinna, 1-man])
-  else:
-    return 3
+def gen_gender(female=0.5, male=0.5, nb=0.02):
+    if anonymize:
+        return 3
+    if np.random.uniform() < 1 - nb:
+        return np.random.choice([1, 2], p=[1-female, 1-male])
+    else:
+        return 3
 
-def gen_age():
-  "Normal distribution, mean of 42 and a standard deviation of 20"
-  age = int(np.random.normal(loc=42, scale=20))
-  while age <= 15 or age >= 100:
-    age = int(np.random.normal(loc=42, scale=20))
+def gen_age(mean=42, std=20, lower_lim=15, upper_lim=100):
+  "Normal distribution, default mean of 42 and a standard deviation of 20"
+  age = int(np.random.normal(loc=mean, scale=std))
+  while age <= lower_lim or age >= upper_lim:
+    age = int(np.random.normal(loc=mean, scale=std))
   return age
 
 # There is probably a way to avoid having to write this twice while still using normal distribution, but it works for now
@@ -92,9 +93,13 @@ def gen_vardagstillfredsställelse():
   return val
   #TODO: find probability from other parameters such as living situation and age
 
-def gen_health():
-  return np.random.choice([1,2,3,4,5], p=[0.05,0.2,0.5,0.2,0.05]) # lazy normal distribution
-
+def gen_health(mean=3, std=1, skewness=0):
+    values = np.arange(1, 6)
+    z_scores = (values - mean) / std
+    probabilities = np.exp(-0.5 * z_scores**2) * (1 + skewness * z_scores)
+    probabilities /= np.sum(probabilities)
+    return np.random.choice(values, p=probabilities)
+  
 #TODO:
 ## ------ Daily/weekly time ------ #
 
@@ -107,8 +112,6 @@ def gen_health():
 ## ------- Name & Contact ------ ##
 
 def gen_name(gender):
-
-  # TODO: conformist gender specific names + first, last name commonly matched
 
   # awful structure, TODO: optimize. actually no, the entire name generation shoud be rewritten
   if gender == 1:
@@ -127,6 +130,17 @@ def gen_name(gender):
   last_name = last_bucket[np.random.randint(0,len(last_bucket))]
   last_name = last_name[np.random.randint(0,len(last_name))]
 
+  try:
+      file_path = 'Data/name_corpus.pkl'
+      with open(file_path, 'rb') as f:
+          name_corpus = pickle.load(f)
+
+      
+
+  except FileNotFoundError:
+      return "nullis corpus"
+
+
   return first_name + ' ' + last_name
 
 def new_name(gender): 
@@ -138,6 +152,8 @@ def new_name(gender):
 def gen_phone():
   # challenge# 1: needs to be unique
   # for now it will have a probability of 2.474631929433396e-07 to be duplicare
+
+  # Swedish phone# TODO add other 
   a = str(np.random.choice([70, 72, 73, 76, 79]))
   b = np.random.randint(100, high=999)
   c = np.random.randint(100, high=999)
@@ -162,24 +178,34 @@ class PersonGenerator:
     def __init__(self, anonymize=True):
         self.anonymize = anonymize
         
-    def generate_person(self):
+    def generate_person(self, 
+    
+        dist_gender = {'female': 0.5, 'male': 0.5, 'nb': 0.02},
+        dist_age = {'mean': 42, 'std': 20, 'lower_lim': 15, 'upper_lim': 100},
+        
+        dist_health = {'mean': 3, 'std': 1, 'skewness': 0}
+
+        ):
+
         # Just ints
-        age = gen_age()
+        age = gen_age(**dist_age)
         phone = gen_phone()
-        gendr = gen_gender()
+        gendr = gen_gender(**dist_gender)
         civil = gen_civilstånd(age)
         utbil = gen_utbildningsnivå(age)
         syssl = gen_sysselsättning(age)
         boend = gen_boende()
         bormd = gen_bor_med(age, civil)
         vardt = gen_vardagstillfredsställelse()
-        hälsa = gen_health()
+        hälsa = gen_health(**dist_health)
 
         # TODO: Token this
-        name = gen_name(gendr)
+        name = gen_name(gendr) # Tokenization has begun! 
+
         mail = _email.gen_email(name, age, self.anonymize)
         _psw = _email.gen_psw(name, age, self.anonymize)
 
+        # TODO fix this clusterfuck also rename to english
         return (age,name,mail,_psw,phone,gendr,civil,utbil,syssl,boend,bormd,vardt,hälsa)
 
 def value_mapper(person_list, language='english', anonymize=False):
