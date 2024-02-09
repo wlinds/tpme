@@ -11,11 +11,13 @@ def gen_email(name: str = None,
               age: int = None,
               anonymize: bool = 0,
 
+              add_birth_p = [0.5, 0.25, 0.25],
+
               boomer_age: int = 59,
               boomer_factor: float = 0.15,
               
               domain_distribution: list = [0.55, 0.05, 0.05, 0.05, 0.19, 0.01, 0.1],
-              custom_domain: list = [], # TODO
+              force_domain: str = "",
               
               century_removal_p: float = 0.9,
               nickname_p: float = 0.5,
@@ -26,7 +28,9 @@ def gen_email(name: str = None,
               millenial_mail_p: float = 0.05,
               anonymize_mail_p: float = 0.005,
               apple_hidden_p: float = 0.01,
-              asdf_mail_p: float = 0.05
+              asdf_mail_p: float = 0.05,
+
+              force_formal: bool = False,
 
               
               ):
@@ -49,12 +53,20 @@ def gen_email(name: str = None,
     if not age:
         age = int(np.random.normal(mean_age, std_age))
 
-    # TODO 
+    # TODO handle domain better
     domain_bucket = ['gmail.com', 'hotmail.com', 'live.se', 'live.com', 'outlook.com', 'yahoo.se', 'icloud.com']
     other_domains = ['telia.se', 'spray.se', 'glocalnet.se', 'bredband.net', 'regeringen.se']
 
+    if force_domain != "":
+        domain_distribution = [1]
+        domain_bucket = [force_domain]
+        other_domains = [force_domain]
+
+    if force_formal and force_domain:
+        return f"{name.split()[0].lower()}.{name.split()[1].lower()}@{force_domain}"
+
     if age > boomer_age and np.random.rand() < boomer_factor:
-        spelling_mistake(name)
+        pass # name = spelling_mistake(name.split()[0])
 
     birth_year = datetime.date.today().year - age # Add birth year to end of mail 
     mail_domain = np.random.choice(domain_bucket, p=domain_distribution)
@@ -68,7 +80,8 @@ def gen_email(name: str = None,
         if np.random.choice([0,1], p=[0.1, century_removal_p]) == 1: suffix = str(birth_year)[-2:]
 
     # 50% to remove entire birth year, 25% to add a random int instead
-    suffix_modifier = np.random.choice([0,1,3], p=[0.5, 0.25, 0.25])
+    if force_formal: add_birth_p = [1, 0, 0]
+    suffix_modifier = np.random.choice([0,1,3], p=add_birth_p)
 
     if suffix_modifier == 0: suffix = ''
     elif suffix_modifier == 1: suffix = np.random.randint(1,9)
@@ -116,8 +129,8 @@ def gen_email(name: str = None,
     # apple_hidden_p: float = 0.01,
     # asdf_mail_p: float = 0.05
 
-    # Millenial email if millenial
-    if birth_year in range(1989,1998) and np.random.rand() < millenial_mail_p:
+    # Millenial email if millenial OR millenial p == 1
+    if birth_year in range(1989,1998) and np.random.rand() < millenial_mail_p or millenial_mail_p == 1:
         return millenial_mail(birth_year)
 
     # Completely random and anonymous email
@@ -170,15 +183,15 @@ def spelling_mistake(name):
     return(''.join(s_list) + name.split()[1])
 
 def millenial_mail(birth_year):
-	deco = np.random.choice(['xX_', '_', '', ''])
-	word_list1 = ['star', 'cool', 'dark', 'moon', 'knight', 'hunter', '420']
-	word_list2 = ['boy', 'girl', 'dude', 'killer', 'fire', 'master']
-	separator = ['_', '', '', '-']
-	domain_mil = '@' + np.random.choice(['gmail.com','live.com','live.se'])	
-	stupid_mail = str(deco) + word_list1[np.random.randint(len(word_list1))] + separator[np.random.randint(len(separator))] + word_list2[np.random.randint(len(word_list2))] + str(deco[::-1])
-	if stupid_mail[-1::] == 'x':
-	  return stupid_mail + domain_mil
-	return stupid_mail + str(birth_year)[-2:] + domain_mil
+    deco = np.random.choice(['xX_', '_', '', ''])
+    word_list1 = ['star', 'cool', 'dark', 'moon', 'knight', 'hunter', '420']
+    word_list2 = ['boy', 'girl', 'dude', 'killer', 'fire', 'master']
+    separator = ['_', '', '', '-']
+    domain_mil = '@' + np.random.choice(['gmail.com','live.com','live.se'])	
+    stupid_mail = str(deco) + word_list1[np.random.randint(len(word_list1))] + separator[np.random.randint(len(separator))] + word_list2[np.random.randint(len(word_list2))] + str(deco[::-1])
+    if stupid_mail[-1::] == 'x':
+        return stupid_mail + domain_mil
+    return stupid_mail + str(birth_year)[-2:] + domain_mil
 
 
 def gen_psw(name,age,anonymize):
