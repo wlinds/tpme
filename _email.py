@@ -1,11 +1,9 @@
 import numpy as np
 import datetime
 import bucket
-
+import re
 import pickle
 
-
-# boomer factor: 15% to spell name incorrectly in email if age > boomer_age
 
 def gen_email(name: str = None, 
               age: int = None,
@@ -32,6 +30,7 @@ def gen_email(name: str = None,
 
               force_formal: bool = False,
 
+              allow_foreign_characters = False,
               
               ):
 
@@ -49,6 +48,10 @@ def gen_email(name: str = None,
       except FileNotFoundError:
           print(f"Name generation error: Could not find {file_path}. Name set to default.")
           name = "John Doe"
+
+    if not allow_foreign_characters:
+        name = re.sub(r'[^a-zA-Z0-9 ]', '_', name)
+        # name = name.replace('å', 'a').replace('ö', 'o').replace('ä', 'a')
 
     if not age:
         age = int(np.random.normal(mean_age, std_age))
