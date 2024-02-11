@@ -10,6 +10,7 @@ import json
 
 import _email, bucket
 from mapping import TranslationMap
+from utils.utils import generate_datetime, generate_expenses
 
 # GDPR notice: this program can potentially generate real personal data
 # Make sure anonymize is TRUE or manually check all generated rows before making anything public
@@ -39,12 +40,47 @@ def quick_mail(n, export_as='csv', export_path=export_path, verbose=True):
 
     """
 
-    samples = [_email.gen_email() for i in range (n)]
+    samples = [_email.gen_email() for i in range(n)]
 
     if export_path:
         export_manager(samples, export_as, export_path, verbose)
 
     return samples
+
+def quick_name(n):
+    """
+    Quickly generates and returns names.
+    """
+
+    samples = [gen_name() for i in range(n)]
+
+    return samples
+
+
+def quick_expenses(n_people=12,
+                   n_expenses=200,
+                   keyword=None,
+                   category=None,
+                   timeframe=None):
+    """
+    Quickly generate synthetic expenses table.
+    """
+
+    people = quick_name(n_people)
+
+    expenses_list = []
+
+    for _ in range(n_expenses):
+        expense = generate_expenses(keyword, category)
+
+        expense['Person'] = np.random.choice(people)
+        expenses_list.append(expense)
+
+    expenses_df = pd.DataFrame(expenses_list)
+
+    return expenses_df
+
+
 
 
 def export_manager(data, export_as='csv', export_path=export_path, verbose=True):
@@ -174,14 +210,14 @@ def gen_health(mean=3, std=1, skewness=0):
 
 ## ------- Name & Contact ------ ##
 
-def gen_name(gender):
+def gen_name(gender=None):
 
   # awful structure, TODO: optimize. actually no, the entire name generation shoud be rewritten
   if gender == 1:
     first_bucket = [bucket.f_norwa_list, bucket.f_scandi_gpt, bucket.f_slavic_gpt, bucket.f_sweden_gpt]
   elif gender == 2:  
     first_bucket = [bucket.m_scandi_gpt, bucket.m_slavic_gpt, bucket.m_sweden_gpt]
-  elif gender == 3:
+  elif gender == 3 or gender == None:
     first_bucket = [bucket.f_norwa_list, bucket.f_scandi_gpt, bucket.f_slavic_gpt, bucket.f_sweden_gpt, bucket.m_scandi_gpt, bucket.m_slavic_gpt, bucket.m_sweden_gpt]
 
   # Just a test set-up. This wouldn't be an issue, but it doesn't take cultural matching first and last names into calculations and is currently limited to some regional variations
@@ -245,7 +281,6 @@ class PersonGenerator:
     
         dist_gender = {'female': 0.5, 'male': 0.5, 'nb': 0.02},
         dist_age = {'mean': 42, 'std': 20, 'lower_lim': 15, 'upper_lim': 100},
-        
         dist_health = {'mean': 3, 'std': 1, 'skewness': 0}
 
         ):
@@ -296,29 +331,22 @@ def value_mapper(person_list, language='english', anonymize=False):
 
 if __name__ == '__main__':
     # Create instance of person class
-    pg = PersonGenerator(anonymize=anonymize)
-    person_list = [pg.generate_person() for n in range(rows)]
+    # pg = PersonGenerator(anonymize=anonymize)
+    # person_list = [pg.generate_person() for n in range(rows)]
 
-    df = value_mapper(person_list)
-    print(df)
+    # df = value_mapper(person_list)
+    # print(df)
 
-    export_manager(df, export_as='csv')
-    export_manager(df, export_as='json')
-    export_manager(df, export_as='excel')
-    export_manager(df, export_as='sql')
+    # export_manager(df, export_as='csv')
+    # export_manager(df, export_as='json')
+    # export_manager(df, export_as='excel')
+    # export_manager(df, export_as='sql')
 
-    if export_csv:
-      pd.DataFrame.to_csv(df, f'{export_path}/{file_name}.csv')
-    
-    if export_excel:
-      pd.DataFrame.to_excel(df, f'{export_path}/{file_name}.xlsx')
+    # print(quick_mail(1000, export_as='csv'))
+    # print(quick_mail(1000, export_as='json'))
+    # print(quick_mail(1000, export_as='excel'))
+    # print(quick_mail(1000, export_as='sql'))
 
-    if export_sql:
-      db_path = f'{export_path}/{file_name}.db'
-      con = sqlite3.connect(db_path)
-      df.to_sql('People', con=con, if_exists='replace')
 
-    print(quick_mail(1000, export_as='csv'))
-    print(quick_mail(1000, export_as='json'))
-    print(quick_mail(1000, export_as='excel'))
-    print(quick_mail(1000, export_as='sql'))
+    print(generate_expenses())
+    print(quick_expenses())
