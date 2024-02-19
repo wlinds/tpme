@@ -10,7 +10,8 @@ import json
 
 import _email, bucket
 from mapping import TranslationMap
-from utils.utils import generate_datetime, generate_expenses
+from utils.utils import generate_datetime
+from expenses import generate_expense
 
 # GDPR notice: this program can potentially generate real personal data
 # Make sure anonymize is TRUE or manually check all generated rows before making anything public
@@ -71,7 +72,7 @@ def quick_expenses(n_people=12,
     expenses_list = []
 
     for _ in range(n_expenses):
-        expense = generate_expenses(keyword, category)
+        expense = generate_expense(keyword, category)
 
         expense['Person'] = np.random.choice(people)
         expenses_list.append(expense)
@@ -348,5 +349,5 @@ if __name__ == '__main__':
     # print(quick_mail(1000, export_as='sql'))
 
 
-    print(generate_expenses())
+    print(generate_expense())
     print(quick_expenses())
