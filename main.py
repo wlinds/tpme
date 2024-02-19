@@ -146,9 +146,16 @@ def gen_gender(female=0.5, male=0.5, nb=0.02):
 
 def gen_age(mean=42, std=20, lower_lim=15, upper_lim=100):
   "Normal distribution, default mean of 42 and standard deviation of 20"
+
+  # age = int(np.random.normal(loc=mean, scale=std))
+  # while age <= lower_lim or age >= upper_lim:
+  #     age = int(np.random.normal(loc=mean, scale=std))
+  # return age
+
+  # Probably a better solution
   age = int(np.random.normal(loc=mean, scale=std))
-  while age <= lower_lim or age >= upper_lim:
-      age = int(np.random.normal(loc=mean, scale=std))
+  age = max(age, lower_lim)
+  age = min(age, upper_lim)
   return age
 
 #TODO: Check correlation with age for civilstånd, utbildningsnivå etc.
@@ -349,5 +356,10 @@ if __name__ == '__main__':
     # print(quick_mail(1000, export_as='sql'))
 
 
-    print(generate_expense())
-    print(quick_expenses())
+    # print(generate_expense())
+    # print(quick_expenses())
+
+    pg = PersonGenerator(anonymize=False)
+    person_list = [pg.generate_person(dist_age={'mean': 10, 'std': 0, 'lower_lim': 0, 'upper_lim': 10}) for n in range(10)]
+    df = value_mapper(person_list)
+    print(df)
