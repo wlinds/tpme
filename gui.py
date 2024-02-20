@@ -3,13 +3,22 @@ import pandas as pd
 import plotly.express as px
 
 from main import PersonGenerator, value_mapper
+from expenses import get_dataset as expenses_dataset
 
+TABLE_WIDTH = 1800
+
+st.set_page_config(layout="wide")
+
+
+@st.cache_data
 def get_persons(rows, dist_gender, dist_age, dist_health):
     pg = PersonGenerator(anonymize=False)
-    # TODO should refactor class method
     person_list = [pg.generate_person(dist_gender, dist_age, dist_health) for _ in range(rows)]
     df = value_mapper(person_list)
     return df
+
+
+st.sidebar.title('People Generation')
 
 st.sidebar.subheader("Gender Distribution")
 dist_gender_female_male = st.sidebar.slider("Female/Male", min_value=0.0, max_value=1.0, value=0.5, step=0.01)
@@ -39,4 +48,21 @@ df = get_persons(
     dist_health={'mean': dist_health_mean, 'std': dist_health_std, 'skewness': dist_health_skewness}
 )
 
+
 st.dataframe(df)
+
+# Products
+products = expenses_dataset()
+categories = products['Category'].unique()
+
+# Checkboxes for product categories
+st.sidebar.markdown('---')
+st.sidebar.title('Product Categories')
+selected_categories = [st.sidebar.checkbox(category, key=category) for category in categories]
+
+# Filter the DataFrame based on selected checkboxes
+selected_categories = [category for category, selected in zip(categories, selected_categories) if selected]
+filtered_df = products[products['Category'].isin(selected_categories)]
+
+# Display the filtered DataFrame
+st.dataframe(filtered_df, width=TABLE_WIDTH)
