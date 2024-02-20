@@ -1,8 +1,14 @@
 import random
 from datetime import datetime, timedelta, time
 import pandas as pd
+import hashlib
 
-## Aditional script to generate datetime and expenses
+
+# Hashing for anonymization
+def hash_string(string, end:int):
+    sha256_hash = hashlib.sha256(string.encode())
+    return sha256_hash.hexdigest()[::end]
+
 
 def generate_datetime(date_threshold=None, time_threshold=None, deviation_p=0.01, verbose=True):
     """

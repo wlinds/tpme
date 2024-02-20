@@ -2,7 +2,6 @@ import os
 import pickle
 import numpy as np
 import pandas as pd
-import hashlib
 import sqlite3
 import csv
 import datetime
@@ -10,7 +9,7 @@ import json
 
 import _email, bucket
 from mapping import TranslationMap
-from utils.utils import generate_datetime
+from utils.utils import generate_datetime, hash_string
 from expenses import generate_expense
 
 # GDPR notice: this program can potentially generate real personal data
@@ -161,6 +160,7 @@ def gen_age(mean=42, std=20, lower_lim=15, upper_lim=100):
 #TODO: Check correlation with age for civilstånd, utbildningsnivå etc.
 
 def gen_civilstånd(age):
+  if age < 18: return 6
   if age <= 25: np.random.choice([1, 5, 6], p=[0.01, 0.98, 0.01])
   if age >= 50: np.random.choice([1, 2, 3, 4, 5, 6,], p=[0.5, 0.05, 0.15, 0.15, 0.10, 0.05])
   return np.random.choice([1, 2, 3, 4, 5, 6], p=[0.35, 0.02, 0.09, 0.04, 0.47, 0.03])
@@ -284,10 +284,6 @@ def gen_phone():
   phone = str(0) + a + str(np.random.randint(0,9)) + add_zero(b) + add_zero(c)
   return phone
 
-# Hashing for anonymization
-def hash_string(string, end:int):
-    sha256_hash = hashlib.sha256(string.encode())
-    return sha256_hash.hexdigest()[::end]
 
 class PersonGenerator:
     def __init__(self, anonymize=True):
@@ -367,7 +363,7 @@ if __name__ == '__main__':
     # print(generate_expense())
     # print(quick_expenses())
 
-    pg = PersonGenerator(anonymize=False)
+    pg = PersonGenerator(anonymize=True)
     person_list = [pg.generate_person(dist_age={'mean': 10, 'std': 0, 'lower_lim': 0, 'upper_lim': 10}) for n in range(10)]
     df = value_mapper(person_list)
     print(df)
