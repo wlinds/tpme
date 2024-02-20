@@ -26,9 +26,9 @@ dist_age_lower_lim = st.sidebar.slider("Lower Age Limit", min_value=0, max_value
 dist_age_upper_lim = st.sidebar.slider("Upper Age Limit", min_value=0, max_value=200, value=80)
 
 st.sidebar.subheader("Health Distribution")
-dist_health_mean = st.sidebar.slider("Mean Health", min_value=0, max_value=10, value=3)
+dist_health_mean = st.sidebar.slider("Mean Health", min_value=1, max_value=5, value=3)
 dist_health_std = st.sidebar.slider("Health Standard Deviation", min_value=0, max_value=5, value=1)
-dist_health_skewness = st.sidebar.slider("Health Skewness", min_value=-1, max_value=1, value=0)
+dist_health_skewness = st.sidebar.slider("Health Skewness", min_value=-1.0, max_value=1.0, value=0.0, step=0.01)
 
 rows = st.slider("Number of Rows", min_value=1, max_value=10_000, value=100)
 
