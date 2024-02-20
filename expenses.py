@@ -1,7 +1,7 @@
 import pandas as pd
 from utils.utils import generate_datetime
 
-def custom_pre_process():
+def default_dataset():
     market = pd.read_csv("Data/datasets/tamimimarkets.csv")
     general = pd.read_csv("Data/datasets/Ronash_DS_Assignment.csv")
 
@@ -20,6 +20,13 @@ def custom_pre_process():
 
     return merged_df
 
+def get_dataset(dataset='default'):
+    if dataset=='default':
+        df = default_dataset()
+
+    return df
+
+
 
 def get_price():
     # Placeholder # TODO maybe scrape amazon or just randomize?
@@ -29,7 +36,7 @@ def get_price():
 import pandas as pd
 
 def generate_expense(keyword=None, category=None, search_by='tags', exclude_word=None):
-    df = custom_pre_process()
+    df = default_dataset()
 
     if category:
         df = df[df['Category'] == category]
@@ -68,3 +75,6 @@ def generate_expense(keyword=None, category=None, search_by='tags', exclude_word
 
 if __name__ == "__main__":
     print(generate_expense(keyword="laptop", search_by='title', exclude_word=['backpack', 'bag', 'transport']))
+    products = get_dataset()
+
+    print(products['Category'].unique)
