@@ -205,6 +205,14 @@ def gen_health(mean=3, std=1, skewness=0):
     z_scores = (values - mean) / std
     probabilities = np.exp(-0.5 * z_scores**2) * (1 + skewness * z_scores)
     probabilities /= np.sum(probabilities)
+
+    # ensure that all probabilities are non-negative
+    if np.any(probabilities < 0):
+        probabilities[probabilities < 0] = 0
+        probabilities /= np.sum(probabilities)
+    else:
+        probabilities /= np.sum(probabilities)
+
     return np.random.choice(values, p=probabilities)
   
 #TODO:
