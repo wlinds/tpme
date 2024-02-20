@@ -22,8 +22,8 @@ dist_gender_male = 1 - dist_gender_female_male
 st.sidebar.subheader("Age Distribution")
 dist_age_mean = st.sidebar.slider("Mean Age", min_value=0, max_value=100, value=42)
 dist_age_std = st.sidebar.slider("Age Standard Deviation", min_value=0, max_value=50, value=10)
-dist_age_lower_lim = st.sidebar.slider("Lower Age Limit", min_value=0, max_value=100, value=18)
-dist_age_upper_lim = st.sidebar.slider("Upper Age Limit", min_value=0, max_value=200, value=80)
+dist_age_lower_lim = st.sidebar.slider("Lower Age Limit", min_value=0, max_value=112, value=18)
+dist_age_upper_lim = st.sidebar.slider("Upper Age Limit", min_value=0, max_value=112, value=60)
 
 st.sidebar.subheader("Health Distribution")
 dist_health_mean = st.sidebar.slider("Mean Health", min_value=1, max_value=5, value=3)
