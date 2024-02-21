@@ -226,37 +226,41 @@ def gen_health(mean=3, std=1, skewness=0):
 
 ## ------- Name & Contact ------ ##
 
-def gen_name(gender=None):
-
+def gen_name(gender=None, min_len=8, max_len=20):
   # awful structure, TODO: optimize. actually no, the entire name generation shoud be rewritten
-  if gender == 1:
-    first_bucket = [bucket.f_norwa_list, bucket.f_scandi_gpt, bucket.f_slavic_gpt, bucket.f_sweden_gpt]
-  elif gender == 2:  
-    first_bucket = [bucket.m_scandi_gpt, bucket.m_slavic_gpt, bucket.m_sweden_gpt]
-  elif gender == 3 or gender == None:
-    first_bucket = [bucket.f_norwa_list, bucket.f_scandi_gpt, bucket.f_slavic_gpt, bucket.f_sweden_gpt, bucket.m_scandi_gpt, bucket.m_slavic_gpt, bucket.m_sweden_gpt]
-
-  # Just a test set-up. This wouldn't be an issue, but it doesn't take cultural matching first and last names into calculations and is currently limited to some regional variations
-  first_name = first_bucket[np.random.randint(0,len(first_bucket))]
-  first_name = first_name[np.random.randint(0,len(first_name))]
-  
-  # Here maybe last names should be adjusted to match first names according to cultural status quo
-  last_bucket = [bucket.last_gpt_asia, bucket.last_gpt_eur0, bucket.last_gpt_eur1, bucket.last_gpt_eur2, bucket.last_gpt_mena, bucket.last_swe]
-  last_name = last_bucket[np.random.randint(0,len(last_bucket))]
-  last_name = last_name[np.random.randint(0,len(last_name))]
 
   try:
       file_path = 'Data/name_corpus.pkl'
       with open(file_path, 'rb') as f:
           name_corpus = pickle.load(f)
 
-      
-
   except FileNotFoundError:
       return "nullis corpus"
 
+  if gender == 1:
+      first_bucket = [name_corpus['f_norwa_list'], name_corpus['f_scandi_gpt'], name_corpus['f_slavic_gpt'], name_corpus['f_sweden_gpt']]
+  elif gender == 2:  
+      first_bucket = [name_corpus['m_scandi_gpt'], name_corpus['m_slavic_gpt'], name_corpus['m_sweden_gpt']]
+  elif gender == 3 or gender == None:
+      first_bucket = [name_corpus['f_norwa_list'], name_corpus['f_scandi_gpt'], name_corpus['f_slavic_gpt'], name_corpus['f_sweden_gpt'], name_corpus['m_scandi_gpt'], name_corpus['m_slavic_gpt'], name_corpus['m_sweden_gpt']]
+
+  # Here maybe last names should be adjusted to match first names according to cultural status quo
+  last_bucket = [name_corpus['last_gpt_asia'], name_corpus['last_gpt_eur0'], name_corpus['last_gpt_eur2'], name_corpus['last_gpt_mena'], name_corpus['last_swe']]
+
+  first_name = random_name_from_bucket(first_bucket)
+  last_name = random_name_from_bucket(last_bucket)
+
+  while len(last_name) + len(first_name) > max_len or len(last_name) + len(first_name) < min_len:
+      first_name = random_name_from_bucket(first_bucket)
+      last_name = random_name_from_bucket(last_bucket)
 
   return first_name + ' ' + last_name
+
+
+def random_name_from_bucket(name_bucket):
+    selected_name_list = name_bucket[np.random.randint(0, len(name_bucket))]
+    selected_name = selected_name_list[np.random.randint(0, len(selected_name_list))]
+    return selected_name
 
 def new_name(gender): 
   # Experimental function (make changes to this one)
@@ -293,7 +297,8 @@ class PersonGenerator:
     
         dist_gender = {'female': 0.5, 'male': 0.5, 'nb': 0.02},
         dist_age = {'mean': 42, 'std': 20, 'lower_lim': 15, 'upper_lim': 100},
-        dist_health = {'mean': 3, 'std': 1, 'skewness': 0}
+        dist_health = {'mean': 3, 'std': 1, 'skewness': 0},
+        name_length = {'min_len': 10, 'max_len': 12}
 
         ):
 
@@ -309,8 +314,8 @@ class PersonGenerator:
         vardt = gen_vardagstillfredsställelse()
         hälsa = gen_health(**dist_health)
 
-        # TODO: Token this
-        name = gen_name(gendr) # Tokenization has begun! 
+        # TODO: Finisish tokenization
+        name = gen_name(gendr, **name_length)
 
         mail = _email.gen_email(name, age, self.anonymize)
         _psw = _email.gen_psw(name, age, self.anonymize)
