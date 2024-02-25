@@ -1,5 +1,4 @@
 import os
-import pickle
 import numpy as np
 import pandas as pd
 import sqlite3
@@ -11,6 +10,7 @@ import _email, bucket
 from mapping import TranslationMap
 from utils.utils import generate_datetime, hash_string
 from expenses import generate_expense
+from legacy_names import gen_name
 
 # GDPR notice: this program can potentially generate real personal data
 # Make sure anonymize is TRUE or manually check all generated rows before making anything public
@@ -81,8 +81,6 @@ def quick_expenses(n_people=12,
     return expenses_df
 
 
-
-
 def export_manager(data, export_as='csv', export_path=export_path, verbose=True):
 
     # Default dir for exporting
@@ -123,18 +121,7 @@ def export_manager(data, export_as='csv', export_path=export_path, verbose=True)
     if verbose:
         print(f'Saved as {export_as}: {export_path}/{file_name}')
 
-#------------------------------------ TODO: ------------------------------------------ #
 
-# I slutändan blir det här en tuple med ints som mappas till olika beskrivande namn (utbildning, boende, etc.)
-# När fine-tuning av fördelningar kan anses vara färdig går det att formulera mycket enklare och kortare funktion
-# för att med sannolikhetsfördelning generera ett nästintill identiskt resultat. 
-
-# Namn (och email) ska 'tokenifieras', annars är all annan data nominaldata (i vissa fall ordinal) med små integers
-
-# ------------------------------------------------------------------------------------ #
-
-# Eftersom nb slumpas innan kvinna/man kan det totala värdet på inparametrar överstiga 1,
-# Detta gäller inte för andra funktioner, där sum av alla fördelningar måste vara 1 från början
 def gen_gender(female=0.5, male=0.5, nb=0.02):
     if anonymize:
         return 3
@@ -159,32 +146,32 @@ def gen_age(mean=42, std=20, lower_lim=15, upper_lim=100):
 
 #TODO: Check correlation with age for civilstånd, utbildningsnivå etc.
 
-def gen_civilstånd(age):
+def gen_marital(age):
   if age < 18: return 6
   if age <= 25: np.random.choice([1, 5, 6], p=[0.01, 0.98, 0.01])
   if age >= 50: np.random.choice([1, 2, 3, 4, 5, 6,], p=[0.5, 0.05, 0.15, 0.15, 0.10, 0.05])
   return np.random.choice([1, 2, 3, 4, 5, 6], p=[0.35, 0.02, 0.09, 0.04, 0.47, 0.03])
   # TODO: age should clearly be a used more thoughtful
 
-def gen_utbildningsnivå(age):
+def gen_education(age):
   if age <= 17: return 1 # Grundskolenivå garanterad för age <= 16
   elif age in range(18,19): return np.random.randint(1, high=3) # Slumpar studentexamen för 18-19 år
   elif age >= 19: return np.random.choice([1, 2, 3, 4, 5, 6], p=[0.01, 0.01, 0.26, 0.21, 0.270, 0.24])
   # allt annat random TODO: implement probability for each age
 
-def gen_sysselsättning(age):
+def gen_occupation(age):
   if age >= 66: return 5 # Garanterar pension över 66
   elif age >= 60: return np.random.choice([1, 4, 5, 6]) # Möjlig pension över 60, ej möjliga studier
   elif age <= 17: return 2 # Garanterar studier under 17
   elif age >= 18 or age <= 30: return np.random.choice([1, 2, 3, 4], p=[0.25, 0.65, 0.05, 0.05]) #Högre sannolikhet att vara student
   return np.random.choice([1, 2, 3, 4, 5, 6], p=[0.7, 0.1, 0.088, 0.086, 0.0, 0.02]) # Speglar arbetslöshet och sjukskrivning i sverige 2022
 
-def gen_boende():
+def gen_accommodation():
   return np.random.choice([1, 2, 3, 4, 5], p=[0.25, 0.25, 0.49, 0.005, 0.005])
   # VERY ROUGH estimate, probably not even remotely close to actual distribution
   # TODO: add parameters for probability from age and other stuff
 
-def gen_bor_med(age, civilstånd):
+def gen_living_with(age, civilstånd):
   if age <= 17: return 4 # Garanterar boende med förälder under 17
   if age >= 31 or age <= 50: return np.random.choice([1, 2, 3, 4, 5, 6], p=[0.2, 0.1, 0.2, 0.002, 0.002, 0.496]) # ökad sannolikhet att bo med familj i åldersspann 31-50
   if civilstånd == 2 or 3: return np.random.choice([1, 3, 5], p=[0.98, 0.01, 0.01])
@@ -214,59 +201,7 @@ def gen_health(mean=3, std=1, skewness=0):
         probabilities /= np.sum(probabilities)
 
     return np.random.choice(values, p=probabilities)
-  
-#TODO:
-## ------ Daily/weekly time ------ #
 
-# Arbete	Skötsel	Lek	Rekreation	Sömn
-# Time should add up 1440 (24 hours)
-
-# Tid_ensam	Tid_familj	Tid_vänner	Tid_övriga
-# time does not have to add up to anything specific but sum cannot be > 1440 (24 hours)
-
-## ------- Name & Contact ------ ##
-
-def gen_name(gender=None, min_len=8, max_len=20):
-  # awful structure, TODO: optimize. actually no, the entire name generation shoud be rewritten
-
-  try:
-      file_path = 'Data/name_corpus.pkl'
-      with open(file_path, 'rb') as f:
-          name_corpus = pickle.load(f)
-
-  except FileNotFoundError:
-      return "nullis corpus"
-
-  if gender == 1:
-      first_bucket = [name_corpus['f_norwa_list'], name_corpus['f_scandi_gpt'], name_corpus['f_slavic_gpt'], name_corpus['f_sweden_gpt']]
-  elif gender == 2:  
-      first_bucket = [name_corpus['m_scandi_gpt'], name_corpus['m_slavic_gpt'], name_corpus['m_sweden_gpt']]
-  elif gender == 3 or gender == None:
-      first_bucket = [name_corpus['f_norwa_list'], name_corpus['f_scandi_gpt'], name_corpus['f_slavic_gpt'], name_corpus['f_sweden_gpt'], name_corpus['m_scandi_gpt'], name_corpus['m_slavic_gpt'], name_corpus['m_sweden_gpt']]
-
-  # Here maybe last names should be adjusted to match first names according to cultural status quo
-  last_bucket = [name_corpus['last_gpt_asia'], name_corpus['last_gpt_eur0'], name_corpus['last_gpt_eur2'], name_corpus['last_gpt_mena'], name_corpus['last_swe']]
-
-  first_name = random_name_from_bucket(first_bucket)
-  last_name = random_name_from_bucket(last_bucket)
-
-  while len(last_name) + len(first_name) > max_len or len(last_name) + len(first_name) < min_len:
-      first_name = random_name_from_bucket(first_bucket)
-      last_name = random_name_from_bucket(last_bucket)
-
-  return first_name + ' ' + last_name
-
-
-def random_name_from_bucket(name_bucket):
-    selected_name_list = name_bucket[np.random.randint(0, len(name_bucket))]
-    selected_name = selected_name_list[np.random.randint(0, len(selected_name_list))]
-    return selected_name
-
-def new_name(gender): 
-  # Experimental function (make changes to this one)
-  x = first_bucket[np.random.randint(0,len(first_bucket))]
-
-  return x + ' ' + y
 
 def gen_phone():
   # challenge# 1: needs to be unique
@@ -306,11 +241,11 @@ class PersonGenerator:
         age = gen_age(**dist_age)
         phone = gen_phone()
         gendr = gen_gender(**dist_gender)
-        civil = gen_civilstånd(age)
-        utbil = gen_utbildningsnivå(age)
-        syssl = gen_sysselsättning(age)
-        boend = gen_boende()
-        bormd = gen_bor_med(age, civil)
+        civil = gen_marital(age)
+        utbil = gen_education(age)
+        syssl = gen_occupation(age)
+        boend = gen_accommodation()
+        bormd = gen_living_with(age, civil)
         vardt = gen_vardagstillfredsställelse()
         hälsa = gen_health(**dist_health)
 
