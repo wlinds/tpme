@@ -1,8 +1,9 @@
+import os
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-from main import PersonGenerator, value_mapper
+from main import PersonGenerator, value_mapper, export_manager
 from expenses import get_dataset as expenses_dataset
 
 TABLE_WIDTH = 1800
@@ -17,7 +18,7 @@ def get_persons(rows, dist_gender, dist_age, dist_health, name_length):
     return df
 
 
-st.sidebar.title('People Generation')
+st.sidebar.header('People Generation')
 
 rows = st.sidebar.slider("Rows to generate", min_value=1, max_value=1024, value=100)
 
@@ -48,7 +49,7 @@ with st.sidebar.expander("Health Distribution"):
 # Products
 products = expenses_dataset()
 categories = products['Category'].unique()
-st.sidebar.title('Product Generation')
+st.sidebar.header('Product Generation')
 with st.sidebar.expander('Product Categories'):
     # selected_product_categories = [st.checkbox(category, key=category) for category in categories]
     selected_product_categories = [st.checkbox(f"{category} ({len(products[products['Category'] == category])})", key=category) for category in categories]
@@ -78,3 +79,11 @@ if selected_product_categories:
 
 else:
     st.info("No Product Category selected.")
+
+with st.sidebar:
+    st.header("Export Options")
+    export_format = st.selectbox("Export Format", ["csv", "json", "excel", "sql"])
+    export_path = st.text_input("Export Path", value= os.getcwd())
+    if st.button("Export"):
+        export_manager(df, export_as=export_format, export_path=export_path, verbose=True)
+
