@@ -9,7 +9,6 @@ TABLE_WIDTH = 1800
 
 st.set_page_config(layout="wide")
 
-
 @st.cache_data
 def get_persons(rows, dist_gender, dist_age, dist_health, name_length):
     pg = PersonGenerator(anonymize=False)
@@ -51,7 +50,8 @@ products = expenses_dataset()
 categories = products['Category'].unique()
 st.sidebar.title('Product Generation')
 with st.sidebar.expander('Product Categories'):
-    selected_product_categories = [st.checkbox(category, key=category) for category in categories]
+    # selected_product_categories = [st.checkbox(category, key=category) for category in categories]
+    selected_product_categories = [st.checkbox(f"{category} ({len(products[products['Category'] == category])})", key=category) for category in categories]
 
 
 df = get_persons(
@@ -70,6 +70,11 @@ filtered_df = products[products['Category'].isin(selected_product_categories)]
 
 # Check if anything is selected
 if selected_product_categories:
+    product_search_term = st.text_input("Search Product")
+    if product_search_term:
+        filtered_df = filtered_df[filtered_df['Product'].str.contains(product_search_term, case=False)]
+
     st.dataframe(filtered_df, width=TABLE_WIDTH)
+
 else:
     st.info("No Product Category selected.")
