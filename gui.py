@@ -1,14 +1,15 @@
 import os
+import time
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 
 from main import PersonGenerator, value_mapper, export_manager
-from expenses import get_dataset as expenses_dataset, generate_orders
 
 TABLE_WIDTH = 1800
+VERSION = 'alpha_0.1.2'
 
-st.set_page_config(layout="wide")
+st.set_page_config(page_title=f"TPME {VERSION}", page_icon="👤", layout="wide")
 
 @st.cache_data
 def get_persons(rows, dist_gender, dist_age, dist_health, name_length):
@@ -17,7 +18,8 @@ def get_persons(rows, dist_gender, dist_age, dist_health, name_length):
     df = value_mapper(person_list)
     return df
 
-
+st.sidebar.header(f'This Person Might Exist')
+st.sidebar.text(f'TPME {VERSION}')
 st.sidebar.header('People Generation')
 
 rows = st.sidebar.slider("Rows to generate", min_value=1, max_value=1024, value=100)
@@ -54,64 +56,16 @@ df = get_persons(
     name_length = {'min_len': name_min_len, 'max_len': name_max_len}
 )
 
-# Products
-products = expenses_dataset()
-categories = products['Category'].unique()
-st.sidebar.header('Product Generation')
-with st.sidebar.expander('Product Categories'):
-    # selected_product_categories = [st.checkbox(category, key=category) for category in categories]
-    selected_product_categories = [st.checkbox(f"{category} ({len(products[products['Category'] == category])})", key=category) for category in categories]
-
 selected_cols = st.multiselect("Select columns to display:", df.columns.tolist(), default=df.columns.tolist())
 filtered_df = df[selected_cols]
-
 st.dataframe(filtered_df)
-
-# Filter the DataFrame based on selected checkboxes
-selected_product_categories = [category for category, selected in zip(categories, selected_product_categories) if selected]
-filtered_df = products[products['Category'].isin(selected_product_categories)]
-
-if selected_product_categories:
-    product_search_term = st.text_input("Search Product")
-    if product_search_term:
-        filtered_df = filtered_df[filtered_df['Product'].str.contains(product_search_term, case=False)]
-
-    st.dataframe(filtered_df, width=TABLE_WIDTH)
-
-else:
-    st.info("No Product Category selected.")
-
-
-
-# Orders
-n_orders = 2
-start_at = None
-print(df)
-
-print('aaa')
-print(df['Customer ID'])
-print(df['Customer ID'].dtypes)
-
-print(df['Customer ID'].unique())
-
-orders_df = generate_orders(df, n_orders, start_at)
-st.dataframe(orders_df)
-
-
-
-
-
-
-
-
-
 
 # Sidebar - Export
 
 with st.sidebar:
     st.header("Export Options")
     export_format = st.selectbox("Export Format", ["csv", "json", "excel", "sql"])
-    export_path = st.text_input("Export Path", value= os.getcwd())
+    export_path = st.text_input("Export Path", value= os.getcwd()+'/Exports')
     if st.button("Export"):
-        export_manager(df, export_as=export_format, export_path=export_path, verbose=True)
-
+        export_manager(filtered_df, export_as=export_format, export_path=export_path, verbose=True)
+        st.success("Export successful! 🚀✨")
