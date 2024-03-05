@@ -9,7 +9,6 @@ def gen_name(gender=None, min_len=8, max_len=20):
       file_path = 'Data/name_corpus.pkl'
       with open(file_path, 'rb') as f:
           name_corpus = pickle.load(f)
-          print(name_corpus.keys())
 
   except FileNotFoundError:
       return "nullis corpus"
