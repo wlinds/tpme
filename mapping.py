@@ -24,9 +24,9 @@ class TranslationMap:
 
         self.column_names = ['Age', 'Name', 'Email', 'Password', 'Phone', 'Gender', 'Marital Status',
                                             'Education', 'Occupation', 'Accommodation', 'Living with',
-                                            'Everyday satisfaction', 'Health']
+                                            'Everyday satisfaction', 'Health', 'Customer ID', 'Street Address', 'Postal Code', 'City', 'Country']
 
-        self.column_names_swe = ['Ålder','Namn', 'Email', 'Lösenord', 'Telefon', 'Kön', 'Civilstånd', 'Utbildningsnivå', 'Sysselsättning', 'Boende', 'Tillsammans_med', 'Vardagstillfredsställelse', 'Hälsa']
+        self.column_names_swe = ['Ålder','Namn', 'Email', 'Lösenord', 'Telefon', 'Kön', 'Civilstånd', 'Utbildningsnivå', 'Sysselsättning', 'Boende', 'Tillsammans_med', 'Vardagstillfredsställelse', 'Hälsa', 'Kundnummer', 'Gatuaddress', 'Postnummer', 'Stad', 'Land']
 
     def get_translation(self, column, key):
         if self.language in self.translation_maps and column in self.translation_maps[self.language] and key in self.translation_maps[self.language][column]:

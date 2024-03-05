@@ -1,15 +1,15 @@
 # This Person Might Exist - Procedurally generated people.
 
-Generate rows of persons with attributes such as phone number, name, email, health and more.
+![alt text](assets/demo_alpha012.png)
 
-Inspired by http://thispersondoesnotexist.com but with data arrays (Pandas).
+Generate rows of persons with attributes such as phone number, name, email, health and more.
 
 [Check the notebook](demo.ipynb) for a demo.
 
 **Export support**: CSV, Excel, SQL
 
 
-
+---
 
 ### GDPR Notice
 

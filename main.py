@@ -9,7 +9,7 @@ import json
 import _email, bucket
 from mapping import TranslationMap
 from utils.utils import generate_datetime, hash_string
-from expenses import generate_expense
+from expenses import generate_expense, generate_orders, generate_order_details, get_dataset
 from legacy_names import gen_name
 
 # GDPR notice: this program can potentially generate real personal data
@@ -81,7 +81,7 @@ def quick_expenses(n_people=12,
     return expenses_df
 
 
-def export_manager(data, export_as='csv', export_path=export_path, verbose=True):
+def export_manager(data, export_as='csv', export_path=export_path, verbose=True, index=False):
 
     # Default dir for exporting
     os.makedirs(export_path, exist_ok=True)
@@ -93,13 +93,23 @@ def export_manager(data, export_as='csv', export_path=export_path, verbose=True)
 
     if isinstance(data, list):
 
+        # if export_as == 'csv':
+        #     csv_file_path = os.path.join(export_path, f"{file_name}.csv")
+        #     with open(csv_file_path, "w", newline="") as csv_file:
+        #         csv_writer = csv.writer(csv_file)
+        #         csv_writer.writerow([{header}])
+        #         for sample in data:
+        #             csv_writer.writerow([sample])
+
         if export_as == 'csv':
             csv_file_path = os.path.join(export_path, f"{file_name}.csv")
-            with open(csv_file_path, "w", newline="") as csv_file:
+            with open(csv_file_path, "w") as csv_file:
                 csv_writer = csv.writer(csv_file)
-                csv_writer.writerow([{header}])
+                # Write header directly
+                csv_writer.writerow([header])
+                # Write each data point without extra list wrapping
                 for sample in data:
-                    csv_writer.writerow([sample])
+                    csv_writer.writerow(sample)
 
         elif export_as == 'json':
             json_file_path = os.path.join(export_path, f"{file_name}.json")
@@ -108,15 +118,18 @@ def export_manager(data, export_as='csv', export_path=export_path, verbose=True)
 
     elif isinstance(data, pd.DataFrame):
 
-        df = value_mapper(data)
+        # df = value_mapper(data)
     
         if export_as == 'excel' or export_as == 'xlsx':
-            pd.DataFrame.to_excel(df, f'{export_path}/{file_name}.xlsx')
+            pd.DataFrame.to_excel(data, f'{export_path}/{file_name}.xlsx',index=index)
 
         elif export_as == 'sql':
             db_path = f'{export_path}/{file_name}.db'
             con = sqlite3.connect(db_path)
             df.to_sql('People', con=con, if_exists='replace')
+
+        elif export_as == 'csv':
+            pd.DataFrame.to_csv(data, f'{export_path}/{file_name}.csv,', index=index)
 
     if verbose:
         print(f'Saved as {export_as}: {export_path}/{file_name}')
@@ -203,7 +216,7 @@ def gen_health(mean=3, std=1, skewness=0):
     return np.random.choice(values, p=probabilities)
 
 
-def gen_phone():
+def gen_phone(anonymize=False):
   # challenge# 1: needs to be unique
   # for now it will have a probability of 2.474631929433396e-07 to be duplicare
 
@@ -222,6 +235,33 @@ def gen_phone():
 
   phone = str(0) + a + str(np.random.randint(0,9)) + add_zero(b) + add_zero(c)
   return phone
+
+
+def gen_customerID():
+    random_number = np.random.randint(100000, 999999)
+    user_id = f'U{random_number}'
+    return user_id
+
+def gen_address():
+    street_names = []
+    with open('Data/datasets/ssn.csv', 'r', newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            street_names.append(row['Street Name'])
+
+    return np.random.choice(street_names) + " " + str(np.random.randint(1,30))
+
+def gen_postal():
+    first_part = np.random.randint(100, 999)
+    second_part = np.random.randint(10, 99)
+    postal_code = f"{first_part} {second_part}"
+    return postal_code
+
+def gen_country():
+    return 'Sweden'
+
+def gen_city():
+    return np.random.choice(['Göteborg', 'Stockholm', 'Malmö'])
 
 
 class PersonGenerator:
@@ -249,6 +289,13 @@ class PersonGenerator:
         vardt = gen_vardagstillfredsställelse()
         hälsa = gen_health(**dist_health)
 
+        customer_id = gen_customerID()
+
+        address = gen_address()
+        postal = gen_postal()
+        city = gen_city()
+        country = gen_country()
+
         # TODO: Finisish tokenization
         name = gen_name(gendr, **name_length)
 
@@ -256,11 +303,41 @@ class PersonGenerator:
         _psw = _email.gen_psw(name, age, self.anonymize)
 
         # TODO fix this clusterfuck also rename to english
-        return (age,name,mail,_psw,phone,gendr,civil,utbil,syssl,boend,bormd,vardt,hälsa)
+        return (age,name,mail,_psw,phone,gendr,civil,utbil,syssl,boend,bormd,vardt,hälsa, customer_id, address, postal, city, country)
+
+    def customer_generation(self, 
+    
+        dist_gender = {'female': 0.5, 'male': 0.5, 'nb': 0.02},
+        dist_age = {'mean': 42, 'std': 20, 'lower_lim': 15, 'upper_lim': 100},
+        name_length = {'min_len': 10, 'max_len': 12}
+
+        ):
+        gendr = gen_gender(**dist_gender)
+        age = gen_age(**dist_age)
+        phone = gen_phone(anonymize=True)
+        customer_id = gen_customerID()
+        address = gen_address()
+        postal = gen_postal()
+        city = gen_city()
+        country = gen_country()
+        name = gen_name(gendr, **name_length)
+        mail = _email.gen_email(name, age, anonymize=True)
+        _psw = _email.gen_psw(name, age, self.anonymize)
+
+        return (customer_id,name,mail,_psw,phone,address,postal,city,country)
 
 
-def value_mapper(person_list, language='english', anonymize=False):
+
+def value_mapper(person_list, language='english', anonymize=False, is_customer=False):
     tm = TranslationMap(language=language)
+
+    if isinstance(person_list, tuple):
+        person_list = [person_list]
+    
+    if is_customer:
+        df = pd.DataFrame(person_list, columns=[tm.column_names[13], tm.column_names[1], tm.column_names[2], tm.column_names[3], tm.column_names[4], tm.column_names[14], tm.column_names[15], tm.column_names[16], tm.column_names[17]])
+
+        return df
 
     df = pd.DataFrame(person_list, columns=[tm.column_names])
 
@@ -303,7 +380,60 @@ if __name__ == '__main__':
     # print(generate_expense())
     # print(quick_expenses())
 
-    pg = PersonGenerator(anonymize=True)
-    person_list = [pg.generate_person(dist_age={'mean': 10, 'std': 0, 'lower_lim': 0, 'upper_lim': 10}) for n in range(10)]
-    df = value_mapper(person_list)
-    print(df)
+    # pg = PersonGenerator(anonymize=False)
+    # person_list = [pg.generate_person(dist_age={'mean': 10, 'std': 0, 'lower_lim': 0, 'upper_lim': 10}) for n in range(10)]
+    # df = value_mapper(person_list)
+    # print(df)
+
+    # person = pg.customer_generation()
+
+    # person_list = [pg.customer_generation(dist_age={'mean': 10, 'std': 0, 'lower_lim': 0, 'upper_lim': 10}) for n in range(50)]
+
+    # print(type(person_list))
+    # print(person_list)
+
+    # df = value_mapper(person_list, is_customer=True)
+    # df = df.drop(['Password'], axis=1)
+    # print(df)
+
+    # export_manager(df, export_as='csv')
+
+    # print(generate_expense(keyword="Dog Treats", search_by='title', exclude_word=['backpack', 'bag', 'transport']))
+
+
+
+    # df = pd.read_csv('Exports/AppFarm.csv')
+
+    # products = get_dataset(custom_path='Data/product.csv')
+    # orders = get_dataset(custom_path='Data/export_data (1).csv')
+    # print(products)
+    # print(orders)
+
+    # order_details = generate_order_details(orders, custom_path='Data/products.csv')
+    # print(order_details)
+
+    # export_manager(order_details)
+
+
+
+    # orders, order_details = generate_orders(df, 3, start_at=512)
+    # print(orders)
+    # print(order_details)
+
+    # export_manager(person_list, export_as='csv')
+    # export_manager(orders, export_as='csv')
+    # export_manager(order_details, export_as='csv')
+    # dataset = get_dataset(dataset='default', category='Animals & Pet Supplies')
+    # print(dataset)
+    # dataset = dataset.drop(['Currency'], axis=1)
+    # export_manager(dataset, export_as='csv')
+
+
+
+
+    df = pd.read_csv('Data/products.csv')
+
+    column_name = 'Product'
+
+    df['len'] = df[column_name].apply(lambda x: len(str(x)))
+    print(sum(df['len']))

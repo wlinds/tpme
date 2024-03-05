@@ -199,6 +199,9 @@ def millenial_mail(birth_year):
 
 def gen_psw(name,age,anonymize):
   ## Password generation (sloppy)
+  # p to capitalize random letters
+  # p to combine words
+  # p to add number
   if anonymize:
     return 'REDACTED'
   return bucket.psw0[np.random.randint(0,len(bucket.psw0))] + str(datetime.date.today().year - age)[::-2]
