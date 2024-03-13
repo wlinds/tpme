@@ -16,6 +16,7 @@ def get_persons(rows, dist_gender, dist_age, dist_health, name_length, selected_
     pg = PersonGenerator(anonymize=False)
     person_list = [pg.generate_person(dist_gender, dist_age, dist_health, name_length) for _ in range(rows)]
     df = value_mapper(person_list, language=selected_language)
+      
     return df
 
 st.sidebar.header(f'👤 This Person Might Exist')
@@ -60,9 +61,13 @@ df = get_persons(
     selected_language=selected_language.lower()
 )
 
+
 selected_cols = st.multiselect("Select columns to display:", df.columns.tolist(), default=df.columns.tolist())
 filtered_df = df[selected_cols]
 st.dataframe(filtered_df)
+
+fig = px.scatter(df, x='Age', y='Health', color='Gender', size='Age', hover_data=['Name'], title='Age & Health #TODO make a modular function')
+st.plotly_chart(fig)
 
 # Sidebar - Export
 
