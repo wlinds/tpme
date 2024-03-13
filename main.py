@@ -146,11 +146,6 @@ def gen_gender(female=0.5, male=0.5, nb=0.02):
 def gen_age(mean=42, std=20, lower_lim=15, upper_lim=100):
   "Normal distribution, default mean of 42 and standard deviation of 20"
 
-  # age = int(np.random.normal(loc=mean, scale=std))
-  # while age <= lower_lim or age >= upper_lim:
-  #     age = int(np.random.normal(loc=mean, scale=std))
-  # return age
-
   # Probably a better solution
   age = int(np.random.normal(loc=mean, scale=std))
   age = max(age, lower_lim)
@@ -328,18 +323,14 @@ class PersonGenerator:
 
 
 
-def value_mapper(person_list, language='english', anonymize=False, is_customer=False):
+def value_mapper(person_list, language='english', anonymize=False):
     tm = TranslationMap(language=language)
 
     if isinstance(person_list, tuple):
         person_list = [person_list]
-    
-    if is_customer:
-        df = pd.DataFrame(person_list, columns=[tm.column_names[13], tm.column_names[1], tm.column_names[2], tm.column_names[3], tm.column_names[4], tm.column_names[14], tm.column_names[15], tm.column_names[16], tm.column_names[17]])
 
-        return df
-
-    df = pd.DataFrame(person_list, columns=[tm.column_names])
+    # Note: Cannot pass a df when using from_records
+    df = pd.DataFrame.from_records(person_list, columns=tm.column_names)
 
     df['Gender'] = df.apply(lambda row: tm.get_translation('Gender', row['Gender']), axis=1)
     df['Marital Status'] = df.apply(lambda row: tm.get_translation('Marital Status', row['Marital Status']), axis=1)
