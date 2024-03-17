@@ -66,8 +66,30 @@ selected_cols = st.multiselect("Select columns to display:", df.columns.tolist()
 filtered_df = df[selected_cols]
 st.dataframe(filtered_df)
 
-fig = px.scatter(df, x='Age', y='Health', color='Gender', size='Age', hover_data=['Name'], title='Age & Health #TODO make a modular function')
-st.plotly_chart(fig)
+# Plot
+def create_scatter_plot(df, x_col, y_col, color_col, size_col, opacity_value):
+    fig = px.scatter(df, x=x_col, y=y_col, color=color_col, size=size_col, opacity=opacity_value,
+                     hover_data=['Name'])
+    return fig
+
+
+with st.expander('Scatter Plot'):
+    col_plot, col_options = st.columns([5, 1])
+
+    with col_options:
+        st.write(f"**Plot Options:** Customize your plot by selecting variables.")
+        x_var = st.selectbox('X-axis:', options=df.columns)
+        y_var = st.selectbox('Y-axis:', options=df.columns)
+        col_var = st.selectbox('Color variable:', options=df.columns)
+        size_var = st.selectbox('Size variable:', options=df.select_dtypes(include=['int']).columns)
+
+        opacity_value = st.slider('Select opacity value:', min_value=0.1, max_value=1.0, value=0.8, step=0.1)
+
+    with col_plot:
+        fig = create_scatter_plot(df, x_var, y_var, col_var, size_var, opacity_value)
+        st.plotly_chart(fig, use_container_width=True)
+
+
 
 # Sidebar - Export
 
