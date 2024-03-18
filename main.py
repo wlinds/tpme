@@ -344,7 +344,7 @@ def value_mapper(person_list, language='english', anonymize=False):
         df['Name'] = df['Name'].apply(hash_string, end=8)
 
     if language == 'swedish':
-        df.columns = [tm.column_names_swe]
+        df.columns = tm.column_names_swe
 
     return df
 
