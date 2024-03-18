@@ -68,8 +68,12 @@ st.dataframe(filtered_df)
 
 # Plot
 def create_scatter_plot(df, x_col, y_col, color_col, size_col, opacity_value):
-    fig = px.scatter(df, x=x_col, y=y_col, color=color_col, size=size_col, opacity=opacity_value,
-                     hover_data=['Name'])
+    if 'Name' in df.columns:
+        hover_data = ['Name']
+    else: 
+        hover_data = None
+    fig = px.scatter(filtered_df, x=x_col, y=y_col, color=color_col, size=size_col, opacity=opacity_value,
+                     hover_data=hover_data)
     return fig
 
 
@@ -78,10 +82,10 @@ with st.expander('Scatter Plot'):
 
     with col_options:
         st.write(f"**Plot Options:** Customize your plot by selecting variables.")
-        x_var = st.selectbox('X-axis:', options=df.columns)
-        y_var = st.selectbox('Y-axis:', options=df.columns)
-        col_var = st.selectbox('Color variable:', options=df.columns)
-        size_var = st.selectbox('Size variable:', options=df.select_dtypes(include=['int']).columns)
+        x_var = st.selectbox('X-axis:', options=filtered_df.columns)
+        y_var = st.selectbox('Y-axis:', options=filtered_df.columns)
+        col_var = st.selectbox('Color variable:', options=filtered_df.columns)
+        size_var = st.selectbox('Size variable:', options=filtered_df.select_dtypes(include=['int']).columns)
 
         opacity_value = st.slider('Select opacity value:', min_value=0.1, max_value=1.0, value=0.8, step=0.1)
 
