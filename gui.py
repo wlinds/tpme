@@ -12,8 +12,8 @@ VERSION = 'alpha_0.1.2'
 st.set_page_config(page_title=f"TPME {VERSION}", page_icon="👤", layout="wide")
 
 @st.cache_data
-def get_persons(rows, dist_gender, dist_age, dist_health, name_length, selected_language):
-    pg = PersonGenerator(anonymize=False)
+def get_persons(rows, dist_gender, dist_age, dist_health, name_length, selected_language, anonymize):
+    pg = PersonGenerator(anonymize=anonymize)
     person_list = [pg.generate_person(dist_gender, dist_age, dist_health, name_length) for _ in range(rows)]
     df = value_mapper(person_list, language=selected_language)
       
@@ -22,6 +22,8 @@ def get_persons(rows, dist_gender, dist_age, dist_health, name_length, selected_
 st.sidebar.header(f'👤 This Person Might Exist')
 st.sidebar.text(f'TPME {VERSION}')
 st.sidebar.header('People Generation')
+
+anonymize_val = st.sidebar.checkbox("Anonymize")
 
 languages = ["English", "Swedish"]
 selected_language = st.sidebar.selectbox("Column language:", languages)
@@ -58,7 +60,8 @@ df = get_persons(
     dist_age={'mean': dist_age_mean, 'std': dist_age_std, 'lower_lim': dist_age_lower_lim, 'upper_lim': dist_age_upper_lim},
     dist_health={'mean': dist_health_mean, 'std': dist_health_std, 'skewness': dist_health_skewness},
     name_length = {'min_len': name_min_len, 'max_len': name_max_len},
-    selected_language=selected_language.lower()
+    selected_language=selected_language.lower(),
+    anonymize = anonymize_val
 )
 
 
