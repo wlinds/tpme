@@ -3,11 +3,12 @@ import time
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import time
 
-from main import PersonGenerator, value_mapper, export_manager
+from main import *
 
 TABLE_WIDTH = 1800
-VERSION = 'alpha_0.1.2'
+VERSION = 'alpha_0.2.2'
 
 st.set_page_config(page_title=f"TPME {VERSION}", page_icon="👤", layout="wide")
 
@@ -106,4 +107,6 @@ with st.sidebar:
     export_path = st.text_input("Export Path", value= os.getcwd()+'/Exports')
     if st.button("Export"):
         export_manager(filtered_df, export_as=export_format, export_path=export_path, verbose=True)
-        st.success("Export successful! 🚀✨")
+        export_msg = st.success("Export successful! 🚀✨")
+        time.sleep(3)
+        export_msg.empty()
