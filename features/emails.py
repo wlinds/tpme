@@ -109,8 +109,7 @@ def gen_email(name: str = None,
 
         except IndexError:
             # No whitespaces in input string
-            print("Name does not contain a space.")
-
+            pass
 
     # Replace blank space and make lowercase
     x = np.random.choice(['_','__','-','.',''],p=[0.1,0.1,0.2,0.1,0.5])
