@@ -4,3 +4,17 @@ backgroundColor="#0e1117"
 secondaryBackgroundColor="#262730"
 textColor="#fafafa"
 font="sans serif"
+
+[browser]
+gatherUsageStats = true
+
+[logger]
+level = "info"
+messageFormat = "%(asctime)s %(message)s"
+
+[client]
+showErrorDetails = true
+toolbarMode = "auto"
+
+[runner]
+fastReruns = true
