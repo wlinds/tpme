@@ -2,8 +2,11 @@ import numpy as np
 import pickle
 
 
-def gen_name(gender=None, min_len=8, max_len=20):
+def gen_name(anonymize=True, gender=None, min_len=8, max_len=20):
   # awful structure, TODO: optimize. actually no, the entire name generation shoud be rewritten
+
+  if anonymize == True:
+    return "REDACTED"
 
   try:
       file_path = 'Data/name_corpus.pkl'
@@ -26,9 +29,12 @@ def gen_name(gender=None, min_len=8, max_len=20):
   first_name = random_name_from_bucket(first_bucket)
   last_name = random_name_from_bucket(last_bucket)
 
+  # This is really slow and stupid, should not be used
   while len(last_name) + len(first_name) > max_len or len(last_name) + len(first_name) < min_len:
       first_name = random_name_from_bucket(first_bucket)
       last_name = random_name_from_bucket(last_bucket)
+  
+
 
   return first_name + ' ' + last_name
 

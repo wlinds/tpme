@@ -1,6 +1,5 @@
 import numpy as np
 import datetime
-import bucket
 import re
 import pickle
 
@@ -195,16 +194,6 @@ def millenial_mail(birth_year):
     if stupid_mail[-1::] == 'x':
         return stupid_mail + domain_mil
     return stupid_mail + str(birth_year)[-2:] + domain_mil
-
-
-def gen_psw(name,age,anonymize):
-  ## Password generation (sloppy)
-  # p to capitalize random letters
-  # p to combine words
-  # p to add number
-  if anonymize:
-    return 'REDACTED'
-  return bucket.psw0[np.random.randint(0,len(bucket.psw0))] + str(datetime.date.today().year - age)[::-2]
 
 
 if __name__ == "__main__":
