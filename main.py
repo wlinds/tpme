@@ -6,19 +6,17 @@ from utils.utils import generate_datetime, hash_string
 from features import *
 from exporting import export_manager
 
+VERSION = 'alpha_0.2.2'
+anonymize = False
+
 # GDPR notice: this program can potentially generate real personal data
 # Make sure anonymize is TRUE or manually check all generated rows before making anything public
 
-anonymize = False
-
-# Adjust ammount of people / entries to generate
-rows = 1000
 
 # Export settings
 export_csv = True
 export_excel = False
 export_sql = False
-
 export_path = 'Exports'
 file_name ='tpme_export'
 
@@ -39,12 +37,12 @@ class PersonGenerator:
         phone = gen_phone(anonymize=self.anonymize)
         gendr = gen_gender(self.anonymize, **dist_gender)
         civil = gen_marital(age)
-        utbil = gen_education(age)
-        syssl = gen_occupation(age)
-        boend = gen_accommodation()
-        bormd = gen_living_with(age, civil)
-        vardt = gen_everyday_satisfaction()
-        hälsa = gen_health(**dist_health)
+        educ = gen_education(age)
+        ocup = gen_occupation(age)
+        livin = gen_accommodation()
+        lwith = gen_living_with(age, civil)
+        satis = gen_everyday_satisfaction()
+        health = gen_health(**dist_health)
 
         customer_id = gen_customerID()
 
@@ -55,33 +53,11 @@ class PersonGenerator:
 
         # TODO: Finisish tokenization
         name = gen_name(self.anonymize, gendr, **name_length)
-
         mail = gen_email(name, age, self.anonymize)
         _psw = gen_psw(name, age, self.anonymize)
 
-        # TODO fix this clusterfuck also rename to english
-        return (age,name,mail,_psw,phone,gendr,civil,utbil,syssl,boend,bormd,vardt,hälsa, customer_id, address, postal, city, country)
-
-    def customer_generation(self, 
-    
-        dist_gender = {'female': 0.5, 'male': 0.5, 'nb': 0.02},
-        dist_age = {'mean': 42, 'std': 20, 'lower_lim': 15, 'upper_lim': 100},
-        name_length = {'min_len': 10, 'max_len': 12}
-
-        ):
-        gendr = gen_gender(**dist_gender)
-        age = gen_age(**dist_age)
-        phone = gen_phone(anonymize=True)
-        customer_id = gen_customerID()
-        address = gen_address()
-        postal = gen_postal()
-        city = gen_city()
-        country = gen_country()
-        name = gen_name(gendr, **name_length)
-        mail = _email.gen_email(name, age, anonymize=True)
-        _psw = _email.gen_psw(name, age, self.anonymize)
-
-        return (customer_id,name,mail,_psw,phone,address,postal,city,country)
+        # TODO fix this clusterfuck
+        return (age,name,mail,_psw,phone,gendr,civil,educ,ocup,livin,lwith,satis,health, customer_id, address, postal, city, country)
 
 
 def value_mapper(person_list, language='english', anonymize=False):
