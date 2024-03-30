@@ -1,5 +1,6 @@
 import seaborn as sns
 import matplotlib.pyplot as plt
+import plotly.express as px
 
 def get_histogram(df, title, xlabel, ylabel, bins):
     plt.figure(figsize=(10, 6))
@@ -30,3 +31,10 @@ def get_histogram_subplots(df, title, xlabel, ylabel, bins):
 
     plt.tight_layout()
     plt.show()
+
+
+def get_scatter(df, x_col, y_col, color_col, size_col, opacity_value):
+    hover_data = ['Name'] if 'Name' in df.columns else (['Namn'] if 'Namn' in df.columns else None)
+    fig = px.scatter(df, x=x_col, y=y_col, color=color_col, size=size_col, opacity=opacity_value,
+                     hover_data=hover_data)
+    return fig
