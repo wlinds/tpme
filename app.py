@@ -1,14 +1,8 @@
-import os
-import time
+import os, time
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import time
-
 from main import *
-
-TABLE_WIDTH = 1800
-VERSION = 'alpha_0.2.2'
 
 st.set_page_config(page_title=f"TPME {VERSION}", page_icon="👤", layout="wide")
 
@@ -81,7 +75,7 @@ def create_scatter_plot(df, x_col, y_col, color_col, size_col, opacity_value):
     return fig
 
 
-with st.expander('Scatter Plot'):
+with st.expander('Scatter Plot', expanded=True):
     col_plot, col_options = st.columns([5, 1])
 
     with col_options:
