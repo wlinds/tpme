@@ -59,7 +59,7 @@ df = get_persons(
 )
 
 
-selected_cols = st.multiselect(label="", options=df.columns.tolist(), default=df.columns.tolist())
+selected_cols = st.multiselect(label=" ", label_visibility="hidden", options=df.columns.tolist(), default=df.columns.tolist())
 filtered_df = df[selected_cols]
 st.dataframe(filtered_df)
 
