@@ -1,23 +1,10 @@
-import os
-import time
+import os, time
 import streamlit as st
 import pandas as pd
-import plotly.express as px
-
-from main import PersonGenerator, value_mapper, export_manager
-
-TABLE_WIDTH = 1800
-VERSION = 'alpha_0.1.2'
+from main import *
+from utils.plots import get_scatter
 
 st.set_page_config(page_title=f"TPME {VERSION}", page_icon="👤", layout="wide")
-
-@st.cache_data
-def get_persons(rows, dist_gender, dist_age, dist_health, name_length, selected_language, anonymize):
-    pg = PersonGenerator(anonymize=anonymize)
-    person_list = [pg.generate_person(dist_gender, dist_age, dist_health, name_length) for _ in range(rows)]
-    df = value_mapper(person_list, language=selected_language)
-      
-    return df
 
 st.sidebar.header(f'👤 This Person Might Exist')
 st.sidebar.text(f'TPME {VERSION}')
@@ -53,6 +40,13 @@ with st.sidebar.expander("Health Distribution"):
     dist_health_std = st.slider("Health Standard Deviation", min_value=0, max_value=5, value=1)
     dist_health_skewness = st.slider("Health Skewness", min_value=-1.0, max_value=1.0, value=0.0, step=0.01)
 
+@st.cache_data
+def get_persons(rows, dist_gender, dist_age, dist_health, name_length, selected_language, anonymize):
+    pg = PersonGenerator(anonymize=anonymize)
+    person_list = [pg.generate_person(dist_gender, dist_age, dist_health, name_length) for _ in range(rows)]
+    df = value_mapper(person_list, language=selected_language)
+      
+    return df
 
 df = get_persons(
     rows,
@@ -65,37 +59,26 @@ df = get_persons(
 )
 
 
-selected_cols = st.multiselect("Select columns to display:", df.columns.tolist(), default=df.columns.tolist())
+selected_cols = st.multiselect(label=" ", label_visibility="hidden", options=df.columns.tolist(), default=df.columns.tolist())
 filtered_df = df[selected_cols]
 st.dataframe(filtered_df)
 
-# Plot
-def create_scatter_plot(df, x_col, y_col, color_col, size_col, opacity_value):
-    if 'Name' in df.columns:
-        hover_data = ['Name']
-    else: 
-        hover_data = None
-    fig = px.scatter(filtered_df, x=x_col, y=y_col, color=color_col, size=size_col, opacity=opacity_value,
-                     hover_data=hover_data)
-    return fig
 
-
-with st.expander('Scatter Plot'):
+with st.expander('Scatter Plot', expanded=True):
     col_plot, col_options = st.columns([5, 1])
 
     with col_options:
-        st.write(f"**Plot Options:** Customize your plot by selecting variables.")
+        st.write(f"**Plot Options:**")
         x_var = st.selectbox('X-axis:', options=filtered_df.columns)
         y_var = st.selectbox('Y-axis:', options=filtered_df.columns)
         col_var = st.selectbox('Color variable:', options=filtered_df.columns)
         size_var = st.selectbox('Size variable:', options=filtered_df.select_dtypes(include=['int']).columns)
 
-        opacity_value = st.slider('Select opacity value:', min_value=0.1, max_value=1.0, value=0.8, step=0.1)
+        opacity_value = st.slider('Opacity:', min_value=0.1, max_value=1.0, value=0.8, step=0.1)
 
     with col_plot:
-        fig = create_scatter_plot(df, x_var, y_var, col_var, size_var, opacity_value)
+        fig = get_scatter(filtered_df, x_var, y_var, col_var, size_var, opacity_value)
         st.plotly_chart(fig, use_container_width=True)
-
 
 
 # Sidebar - Export
@@ -106,4 +89,6 @@ with st.sidebar:
     export_path = st.text_input("Export Path", value= os.getcwd()+'/Exports')
     if st.button("Export"):
         export_manager(filtered_df, export_as=export_format, export_path=export_path, verbose=True)
-        st.success("Export successful! 🚀✨")
+        export_msg = st.success("Export successful! 🚀✨")
+        time.sleep(3)
+        export_msg.empty()
