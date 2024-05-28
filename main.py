@@ -4,6 +4,7 @@ from mapping import TranslationMap
 from utils.utils import generate_datetime, hash_string
 
 from features import *
+from features.tokenized_names import gen_tokenized_name
 from exporting import export_manager
 
 VERSION = 'alpha_0.2.2'
@@ -21,8 +22,9 @@ export_path = 'Exports'
 file_name ='tpme_export'
 
 class PersonGenerator:
-    def __init__(self, anonymize=True):
+    def __init__(self, anonymize=True, name_tokenizer="Experimental"):
         self.anonymize = anonymize
+        self.name_tokenizer = name_tokenizer
         
     def generate_person(self, 
     
@@ -51,8 +53,10 @@ class PersonGenerator:
         city = gen_city()
         country = gen_country()
 
-        # TODO: Finisish tokenization
-        name = gen_name(self.anonymize, gendr, **name_length)
+        if self.name_tokenizer == "Experimental":
+            name = gen_tokenized_name(self.anonymize, gendr, **name_length)
+        else:
+            name = gen_name(self.anonymize, gendr, **name_length)
         mail = gen_email(name, age, self.anonymize)
         _psw = gen_psw(name, age, self.anonymize)
 
@@ -87,9 +91,10 @@ def value_mapper(person_list, language='english', anonymize=False):
 
 
 if __name__ == '__main__':
+    rows = 10
 
     # Create instance of person class
-    pg = PersonGenerator(anonymize=anonymize)
+    pg = PersonGenerator(anonymize=False, name_tokenizer="Experimental")
     person_list = [pg.generate_person() for n in range(rows)]
 
     df = value_mapper(person_list)
