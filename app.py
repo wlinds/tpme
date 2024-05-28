@@ -12,8 +12,11 @@ st.sidebar.header('People Generation')
 
 anonymize_val = st.sidebar.checkbox("Anonymize")
 
+tokenizer_list = ["Default", "Experimental"]
+selected_tokenizer = st.sidebar.selectbox("Tokenizer", tokenizer_list)
+
 languages = ["English", "Swedish"]
-selected_language = st.sidebar.selectbox("Column language:", languages)
+selected_language = st.sidebar.selectbox("Column language", languages)
 
 rows = st.sidebar.slider("Rows to generate", min_value=1, max_value=1024, value=100)
 
@@ -41,8 +44,8 @@ with st.sidebar.expander("Health Distribution"):
     dist_health_skewness = st.slider("Health Skewness", min_value=-1.0, max_value=1.0, value=0.0, step=0.01)
 
 @st.cache_data
-def get_persons(rows, dist_gender, dist_age, dist_health, name_length, selected_language, anonymize):
-    pg = PersonGenerator(anonymize=anonymize)
+def get_persons(rows, dist_gender, dist_age, dist_health, name_length, selected_language, anonymize, selected_tokenizer):
+    pg = PersonGenerator(anonymize=anonymize, name_tokenizer=selected_tokenizer)
     person_list = [pg.generate_person(dist_gender, dist_age, dist_health, name_length) for _ in range(rows)]
     df = value_mapper(person_list, language=selected_language)
       
@@ -55,7 +58,8 @@ df = get_persons(
     dist_health={'mean': dist_health_mean, 'std': dist_health_std, 'skewness': dist_health_skewness},
     name_length = {'min_len': name_min_len, 'max_len': name_max_len},
     selected_language=selected_language.lower(),
-    anonymize = anonymize_val
+    anonymize = anonymize_val,
+    selected_tokenizer = selected_tokenizer
 )
 
 

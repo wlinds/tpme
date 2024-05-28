@@ -61,16 +61,13 @@ def get_token(split_word_dict, target_key):
             return token
     return None
 
-def tokenize(corpus, start_length=2, split_type='median', apply_rules=None, verbose=True):
+def tokenize_names(corpus, start_length=2, split_type='median', apply_rules=None, verbose=False):
 
     if isinstance(corpus, dict):
         corpus = extract_lists_and_dicts(corpus, verbose)
 
     split_word_dict = {}
-
-    all_parts = [] # For stats
-
-    token_index = 1
+    all_parts = []  # For stats
 
     if split_type == 'median':
         split_function = median_split
@@ -79,14 +76,18 @@ def tokenize(corpus, start_length=2, split_type='median', apply_rules=None, verb
     else:
         raise ValueError(f"Unknown split_type: {split_type}")
 
-    for word_index, word in enumerate(corpus, start=1):
+    for word in corpus:
         parts = split_function(word)
-        for part in parts:
-            if part not in split_word_dict:
-                split_word_dict[part] = token_index
-                token_index += 1
+        all_parts.extend(parts)
 
-            all_parts.append(part)
+    frequency_counter = Counter(all_parts)
+
+    sorted_tokens = sorted(frequency_counter.keys(), key=lambda x: -frequency_counter[x])
+
+    token_index = 1
+    for token in sorted_tokens:
+        split_word_dict[token] = token_index
+        token_index += 1
 
     if verbose:
         verbose_print(corpus, all_parts, split_word_dict, split_type, apply_rules)
@@ -165,13 +166,13 @@ def check_redundacy():
 
 
 if __name__ == "__main__":
-    print(median_split("Johan"))
+    # print(median_split("Johan"))
     name_corpus = get_corpus()
-    print(type(name_corpus))
     test_bucket = name_corpus['m_sweden_gpt']
 
     # tokens = tokenize(test_bucket)
     tokens = tokenize(name_corpus)
+    print(tokens)
 
 
-    check_redundacy()
+    #check_redundacy()
